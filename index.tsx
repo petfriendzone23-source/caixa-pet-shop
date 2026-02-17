@@ -8,27 +8,24 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then((registration) => {
-        console.log('NexusPet: SW registrado v1.7');
+        console.log('NexusPet: SW v1.8 Registrado');
+        
+        // Força a verificação de atualização no servidor a cada carregamento de página
+        registration.update();
 
-        // Monitora atualizações enquanto o app está aberto
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing;
           if (newWorker) {
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // Notifica o novo worker para assumir o controle imediatamente
                 newWorker.postMessage({ type: 'SKIP_WAITING' });
-                console.log('NexusPet: Nova versão baixada. Atualizando...');
+                console.log('NexusPet: Nova versão v1.8 detectada e instalada.');
               }
             });
           }
         });
-      })
-      .catch((error) => {
-        console.error('NexusPet: Erro no registro do SW:', error);
       });
 
-    // Recarrega a página automaticamente quando o novo SW assume o controle
     let refreshing = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       if (!refreshing) {

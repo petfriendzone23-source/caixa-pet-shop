@@ -1,36 +1,29 @@
 
-const CACHE_NAME = 'nexuspet-cache-v1.7';
+const CACHE_NAME = 'nexuspet-cache-v1.8';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
-  '/index.tsx',
-  '/App.tsx',
-  '/types.ts',
-  '/constants.ts',
   '/manifest.json',
-  'https://cdn.tailwindcss.com',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Libre+Barcode+128&family=Inconsolata:wght@400;700&display=swap'
+  'https://cdn.tailwindcss.com'
 ];
 
-// Instalação: baixa os arquivos e força a ativação
+// Instalação: baixa os arquivos essenciais
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('NexusPet: Fazendo cache de ativos v1.7...');
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
-  self.skipWaiting();
 });
 
-// Ativação: limpa caches antigos
+// Ativação: limpa absolutamente TODOS os caches antigos
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cache) => {
           if (cache !== CACHE_NAME) {
-            console.log('NexusPet: Removendo cache antigo:', cache);
             return caches.delete(cache);
           }
         })
@@ -40,21 +33,21 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Escuta mensagem para forçar o skipWaiting caso o registro detecte atualização
+// Mensagens
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
 });
 
-// Estratégia Network-First com Fallback para Cache
+// Estratégia: Network-First (Tenta rede, se falhar vai pro cache)
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET' || !event.request.url.startsWith('http')) return;
+  if (event.request.method !== 'GET') return;
 
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Se a rede funcionar, atualiza o cache e retorna a resposta
+        // Se for uma resposta válida, guarda no cache
         if (response && response.status === 200) {
           const responseToCache = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
@@ -64,11 +57,9 @@ self.addEventListener('fetch', (event) => {
         return response;
       })
       .catch(() => {
-        // Se a rede falhar (offline), tenta o cache
+        // Offline: tenta o cache
         return caches.match(event.request).then((cachedResponse) => {
           if (cachedResponse) return cachedResponse;
-          
-          // Se for uma navegação de página e não houver cache, retorna o index
           if (event.request.mode === 'navigate') {
             return caches.match('/index.html');
           }
