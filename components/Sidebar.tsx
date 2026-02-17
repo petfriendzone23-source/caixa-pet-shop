@@ -26,7 +26,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout }) => 
         </h1>
         <div className="mt-2 flex items-center gap-2">
           <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">PWA Ativo (Offline)</span>
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Sistema Offline Ativo</span>
         </div>
       </div>
       <nav className="flex-1 mt-4 px-4 space-y-1">
@@ -59,7 +59,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout }) => 
           <span>🚪</span> Sair
         </button>
         <div className="text-center">
-          <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest bg-slate-800 px-2 py-1 rounded">v1.6.0 Stable</span>
+          <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest bg-slate-800 px-2 py-1 rounded">v1.7.0 Stable</span>
         </div>
       </div>
     </aside>
