@@ -9,7 +9,6 @@ interface DashboardViewProps {
 }
 
 const DashboardView: React.FC<DashboardViewProps> = ({ sales }) => {
-  // Estados para filtro de data e categoria
   const [startDate, setStartDate] = useState<string>(() => {
     const d = new Date();
     d.setDate(d.getDate() - 7);
@@ -18,14 +17,12 @@ const DashboardView: React.FC<DashboardViewProps> = ({ sales }) => {
   const [endDate, setEndDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
 
-  // Filtragem de vendas pelo período selecionado
   const filteredSalesByDate = useMemo(() => {
     const start = new Date(startDate).getTime();
     const end = new Date(endDate).getTime() + 86399999;
     return sales.filter(s => s.timestamp >= start && s.timestamp <= end);
   }, [sales, startDate, endDate]);
 
-  // Cálculos para o DRE e Estatísticas (Considerando o Filtro de Categoria)
   const dreData = useMemo(() => {
     let revenue = 0;
     let cogs = 0;
@@ -33,19 +30,15 @@ const DashboardView: React.FC<DashboardViewProps> = ({ sales }) => {
     const productStats: Record<string, { qty: number, rev: number, cost: number, category: string }> = {};
 
     filteredSalesByDate.forEach(sale => {
-      // Filtra os itens da venda pela categoria selecionada
       const itemsInCat = selectedCategory === 'Todos' 
         ? sale.items 
         : sale.items.filter(item => item.category === selectedCategory);
 
       if (itemsInCat.length === 0) return;
 
-      // Calcula o total da venda apenas para os itens da categoria selecionada
       const saleCategoryTotal = itemsInCat.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       revenue += saleCategoryTotal;
 
-      // Cálculo de taxa financeira proporcional
-      // Se a venda for mista, atribuímos a taxa proporcionalmente ao valor da categoria no total da nota
       const proportion = saleCategoryTotal / sale.total;
       const totalSaleFee = sale.payments.reduce((sum, p) => sum + (p.feeAmount || 0), 0);
       financialFees += (totalSaleFee * proportion);
@@ -81,7 +74,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({ sales }) => {
     };
   }, [filteredSalesByDate, selectedCategory]);
 
-  // Dados para o gráfico (Refletindo a categoria se filtrada)
   const chartData = useMemo(() => {
     const data: Record<string, number> = {};
     filteredSalesByDate.forEach(s => {
@@ -100,18 +92,17 @@ const DashboardView: React.FC<DashboardViewProps> = ({ sales }) => {
 
   return (
     <div className="space-y-8 pb-12">
-      {/* Barra de Filtros Aprimorada */}
       <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col lg:flex-row lg:items-end gap-6">
         <div className="flex-1">
           <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
-            🔍 Filtros de Relatório
+            📊 Painel de Resultados
           </h3>
-          <p className="text-xs text-slate-500">Selecione o período e a categoria para análise detalhada</p>
+          <p className="text-xs text-slate-500">Lucro real descontando CMV e taxas financeiras</p>
         </div>
         
         <div className="flex flex-wrap gap-4 items-end">
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-black text-slate-400 uppercase">Categoria</label>
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Categoria</label>
             <select 
               className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-orange-500 bg-white min-w-[150px]"
               value={selectedCategory}
@@ -124,7 +115,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ sales }) => {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-black text-slate-400 uppercase">Início</label>
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Data Inicial</label>
             <input 
               type="date" 
               className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-orange-500"
@@ -134,7 +125,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ sales }) => {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-black text-slate-400 uppercase">Fim</label>
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Data Final</label>
             <input 
               type="date" 
               className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-orange-500"
@@ -145,22 +136,23 @@ const DashboardView: React.FC<DashboardViewProps> = ({ sales }) => {
         </div>
       </div>
 
-      {/* Cards de Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm border-l-4 border-l-blue-500">
-          <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Receita ({selectedCategory})</p>
+        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm border-l-4 border-l-blue-500 group hover:shadow-lg transition-all">
+          <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Receita Bruta</p>
           <h3 className="text-2xl font-black text-slate-900 mt-1">R$ {dreData.revenue.toFixed(2)}</h3>
         </div>
-        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm border-l-4 border-l-red-400">
-          <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Taxas Prop.</p>
+        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm border-l-4 border-l-red-400 group hover:shadow-lg transition-all">
+          <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Taxas Operadoras</p>
           <h3 className="text-2xl font-black text-red-500 mt-1">- R$ {dreData.financialFees.toFixed(2)}</h3>
+          <p className="text-[9px] text-slate-400 font-bold mt-1 uppercase tracking-tighter">Descontadas das vendas</p>
         </div>
-        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm border-l-4 border-l-green-500">
-          <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Lucro {selectedCategory !== 'Todos' ? 'da Cat.' : 'Total'}</p>
+        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm border-l-4 border-l-green-500 group hover:shadow-lg transition-all">
+          <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Lucro Líquido Real</p>
           <h3 className="text-2xl font-black text-slate-900 mt-1">R$ {dreData.netOperatingProfit.toFixed(2)}</h3>
+          <p className="text-[9px] text-green-600 font-bold mt-1 uppercase tracking-tighter">Após CMV e Taxas</p>
         </div>
-        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm border-l-4 border-l-orange-500">
-          <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Margem Líquida</p>
+        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm border-l-4 border-l-orange-500 group hover:shadow-lg transition-all">
+          <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Margem Final</p>
           <h3 className="text-2xl font-black text-slate-900 mt-1">{dreData.margin.toFixed(1)}%</h3>
         </div>
       </div>
@@ -168,7 +160,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ sales }) => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
           <h3 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-2">
-            📈 Evolução de Vendas: {selectedCategory}
+            📈 Vendas Diárias ({selectedCategory})
           </h3>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -193,22 +185,22 @@ const DashboardView: React.FC<DashboardViewProps> = ({ sales }) => {
         </div>
 
         <div className="bg-slate-900 text-white p-8 rounded-3xl border border-slate-800 shadow-xl overflow-hidden relative">
-          <div className="absolute top-0 right-0 p-8 opacity-10 text-8xl">📊</div>
-          <h3 className="text-xl font-black mb-8 uppercase tracking-widest border-b border-slate-800 pb-4">DRE - {selectedCategory}</h3>
+          <div className="absolute top-0 right-0 p-8 opacity-10 text-8xl">📉</div>
+          <h3 className="text-xl font-black mb-8 uppercase tracking-widest border-b border-slate-800 pb-4">Demonstrativo de Resultados</h3>
           
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <span className="text-slate-400 font-bold uppercase tracking-wider text-xs">Receita de Vendas ({selectedCategory})</span>
+              <span className="text-slate-400 font-bold uppercase tracking-wider text-xs">Receita Operacional ({selectedCategory})</span>
               <span className="text-xl font-black text-white">R$ {dreData.revenue.toFixed(2)}</span>
             </div>
             
             <div className="flex justify-between items-center text-red-300">
-              <span className="font-bold uppercase tracking-wider text-xs">(-) CMV (Custo Prod. {selectedCategory})</span>
+              <span className="font-bold uppercase tracking-wider text-xs">(-) CMV (Custo de Mercadoria)</span>
               <span className="text-lg font-bold">R$ ({dreData.cogs.toFixed(2)})</span>
             </div>
 
-            <div className="flex justify-between items-center text-red-400 italic">
-              <span className="font-bold uppercase tracking-wider text-[10px]">(-) Taxas Proporcionais</span>
+            <div className="flex justify-between items-center text-red-400">
+              <span className="font-bold uppercase tracking-wider text-[10px]">(-) Taxas Financeiras Proporcionais</span>
               <span className="text-md font-bold">R$ ({dreData.financialFees.toFixed(2)})</span>
             </div>
 
@@ -220,12 +212,12 @@ const DashboardView: React.FC<DashboardViewProps> = ({ sales }) => {
             </div>
 
             <div className="grid grid-cols-2 gap-4 pt-4">
-              <div className="bg-slate-800/50 p-4 rounded-2xl">
-                <p className="text-[10px] text-slate-500 font-black uppercase mb-1">Lucratividade Cat.</p>
+              <div className="bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50">
+                <p className="text-[10px] text-slate-500 font-black uppercase mb-1">Lucratividade</p>
                 <p className="text-xl font-black text-green-400">{dreData.margin.toFixed(2)}%</p>
               </div>
-              <div className="bg-slate-800/50 p-4 rounded-2xl">
-                <p className="text-[10px] text-slate-500 font-black uppercase mb-1">Itens Únicos</p>
+              <div className="bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50">
+                <p className="text-[10px] text-slate-500 font-black uppercase mb-1">Produtos Únicos</p>
                 <p className="text-xl font-black">{dreData.productStats.length}</p>
               </div>
             </div>
@@ -234,16 +226,16 @@ const DashboardView: React.FC<DashboardViewProps> = ({ sales }) => {
       </div>
 
       <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-8 border-b border-slate-100 flex justify-between items-center">
-          <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">Desempenho por Item: {selectedCategory}</h3>
+        <div className="p-8 border-b border-slate-100 bg-slate-50/30">
+          <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">Análise Individual de Produtos ({selectedCategory})</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest border-b border-slate-100">
               <tr>
-                <th className="px-8 py-4">Item</th>
+                <th className="px-8 py-4">Nome do Item</th>
                 <th className="px-8 py-4">Categoria</th>
-                <th className="px-8 py-4 text-center">Qtd Vendida</th>
+                <th className="px-8 py-4 text-center">Vendas</th>
                 <th className="px-8 py-4 text-right">Faturamento</th>
                 <th className="px-8 py-4 text-right">Lucro Estimado</th>
               </tr>
@@ -251,21 +243,23 @@ const DashboardView: React.FC<DashboardViewProps> = ({ sales }) => {
             <tbody className="divide-y divide-slate-100">
               {dreData.productStats.map((item, idx) => (
                 <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="px-8 py-4 font-bold text-slate-800 text-sm">{item.name}</td>
+                  <td className="px-8 py-4 font-bold text-slate-800 text-sm uppercase">{item.name}</td>
                   <td className="px-8 py-4">
                     <span className="text-[10px] font-black uppercase bg-slate-100 px-2 py-1 rounded text-slate-500">
                       {item.category}
                     </span>
                   </td>
-                  <td className="px-8 py-4 text-center text-sm font-medium text-slate-600">{item.qty}</td>
+                  <td className="px-8 py-4 text-center text-sm font-black text-slate-600">
+                    {item.qty.toFixed(item.category === 'Ração' ? 3 : 0)}
+                  </td>
                   <td className="px-8 py-4 text-right font-black text-slate-900 text-sm">R$ {item.rev.toFixed(2)}</td>
-                  <td className="px-8 py-4 text-right text-green-600 text-sm font-black">R$ {(item.rev - item.cost).toFixed(2)}</td>
+                  <td className="px-8 py-4 text-right text-green-600 text-sm font-black italic">R$ {(item.rev - item.cost).toFixed(2)}</td>
                 </tr>
               ))}
               {dreData.productStats.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-8 py-12 text-center text-slate-400 font-medium italic">
-                    Nenhum dado encontrado para os filtros selecionados.
+                  <td colSpan={5} className="px-8 py-12 text-center text-slate-300 font-black uppercase italic tracking-widest text-xs opacity-50">
+                    Nenhum dado registrado para estes filtros.
                   </td>
                 </tr>
               )}

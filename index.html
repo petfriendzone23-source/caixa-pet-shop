@@ -13,10 +13,10 @@
     "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
     "react/jsx-runtime": "https://esm.sh/react@18.3.1/jsx-runtime",
     "recharts": "https://esm.sh/recharts@2.12.7?external=react,react-dom",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
     "react/": "https://esm.sh/react@^19.2.4/",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.4",
     "vite": "https://esm.sh/vite@^7.3.1",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/"
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.4"
   }
 }
 </script>
@@ -24,7 +24,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐾</text></svg>">
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Libre+Barcode+128&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Libre+Barcode+128&family=Inconsolata:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
       body {
@@ -37,6 +37,40 @@
         font-size: 40px;
         line-height: 1;
       }
+      .font-mono-receipt {
+        font-family: 'Inconsolata', monospace;
+      }
+
+      @media print {
+        @page {
+          margin: 0;
+          size: auto;
+        }
+        body {
+          background-color: white !important;
+          color: black !important;
+        }
+        /* Oculta tudo exceto o modal de recibo */
+        aside, header, main > section:not(.print-container), .print-hidden, button {
+          display: none !important;
+        }
+        #root {
+          padding: 0 !important;
+          margin: 0 !important;
+        }
+        .print-container {
+          display: block !important;
+          position: absolute !important;
+          left: 0 !important;
+          top: 0 !important;
+          width: 100% !important;
+          margin: 0 !important;
+          padding: 10mm !important;
+          box-shadow: none !important;
+          border: none !important;
+        }
+      }
+
       #root:empty::before {
         content: "Iniciando NexusPet...";
         display: flex;
@@ -57,12 +91,5 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
-    <script>
-      window.addEventListener('error', function(e) {
-        if (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK') {
-          console.error('Falha ao carregar recurso crítico:', e.target.src || e.target.href);
-        }
-      }, true);
-    </script>
   </body>
 </html>
