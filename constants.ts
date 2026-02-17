@@ -1,5 +1,5 @@
 
-import { Product } from './types';
+import { Product } from './types.ts';
 
 export const INITIAL_PRODUCTS: Product[] = [
   { id: '1', code: 'RAC-KG', name: 'Ração Golden Adulto Frango (Granel)', costPrice: 12.00, price: 18.50, category: 'Ração', stock: 50, unitType: 'kg' },

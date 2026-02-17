@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
-import { Product, CartItem, Sale, PaymentMethod, PaymentEntry, Customer } from '../types';
-import { CATEGORIES } from '../constants';
+import { Product, CartItem, Sale, PaymentMethod, PaymentEntry, Customer } from '../types.ts';
+import { CATEGORIES } from '../constants.ts';
 
 interface POSViewProps {
   products: Product[];
