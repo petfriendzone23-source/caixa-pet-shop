@@ -111,14 +111,12 @@ const App: React.FC = () => {
 
     setProducts(prev => {
       const newProducts = [...prev];
-      // 1. Devolve o estoque da venda antiga
       editingSale.items.forEach(oldItem => {
         const pIdx = newProducts.findIndex(p => p.id === oldItem.id);
         if (pIdx > -1 && newProducts[pIdx].category !== 'Serviços') {
           newProducts[pIdx].stock += oldItem.quantity;
         }
       });
-      // 2. Retira o estoque da venda nova/editada
       updatedSale.items.forEach(newItem => {
         const pIdx = newProducts.findIndex(p => p.id === newItem.id);
         if (pIdx > -1 && newProducts[pIdx].category !== 'Serviços') {
@@ -131,7 +129,30 @@ const App: React.FC = () => {
     setSales(prev => prev.map(s => s.id === editingSale.id ? updatedSale : s));
     setEditingSale(null);
     setCurrentView('sales');
-    alert('Venda atualizada com sucesso e estoque recalculado!');
+    alert('Venda atualizada com sucesso!');
+  };
+
+  const handleDeleteSale = (saleId: string) => {
+    const saleToDelete = sales.find(s => s.id === saleId);
+    if (!saleToDelete) return;
+
+    if (window.confirm(`⚠️ ATENÇÃO: Deseja realmente CANCELAR PERMANENTEMENTE a venda #${saleId}? O estoque dos itens será devolvido automaticamente.`)) {
+      setProducts(prev => {
+        const newProducts = [...prev];
+        saleToDelete.items.forEach(item => {
+          const pIdx = newProducts.findIndex(p => p.id === item.id);
+          if (pIdx > -1 && newProducts[pIdx].category !== 'Serviços') {
+            newProducts[pIdx].stock += item.quantity;
+          }
+        });
+        return newProducts;
+      });
+
+      setSales(prev => prev.filter(s => s.id !== saleId));
+      setEditingSale(null);
+      setCurrentView('sales');
+      alert('Venda cancelada e estoque estornado com sucesso.');
+    }
   };
 
   const handleStartEditSale = (sale: Sale) => {
@@ -213,6 +234,7 @@ const App: React.FC = () => {
             onCompleteSale={editingSale ? handleUpdateSale : handleCompleteSale}
             editingSale={editingSale}
             onCancelEdit={() => { setEditingSale(null); setCurrentView('sales'); }}
+            onDeleteSale={handleDeleteSale}
           />
         );
       case 'sales':

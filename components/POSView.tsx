@@ -11,9 +11,10 @@ interface POSViewProps {
   onCompleteSale: (sale: Sale) => void;
   editingSale?: Sale | null;
   onCancelEdit?: () => void;
+  onDeleteSale?: (saleId: string) => void;
 }
 
-const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, nextSaleNumber, onCompleteSale, editingSale, onCancelEdit }) => {
+const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, nextSaleNumber, onCompleteSale, editingSale, onCancelEdit, onDeleteSale }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [filter, setFilter] = useState('Todos');
   const [search, setSearch] = useState('');
@@ -25,12 +26,10 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
   const [bulkValue, setBulkValue] = useState<string>('');
   const scannerRef = useRef<HTMLInputElement>(null);
 
-  // Carrega dados se estiver editando
   useEffect(() => {
     if (editingSale) {
       setCart(editingSale.items);
       setSelectedCustomerId(editingSale.customerId || '');
-      // Mapeia pagamentos de volta para o formato do modal
       const mappedPayments = editingSale.payments.map(p => {
         const method = paymentMethods.find(m => m.name === p.method);
         return {
@@ -48,7 +47,6 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
 
   const addToCart = (product: Product, quantity: number = 1) => {
     const isService = product.category === 'Serviços';
-    // Se estiver editando, precisamos considerar o estoque que "estava" na venda original
     const originalQty = editingSale?.items.find(i => i.id === product.id)?.quantity || 0;
     const effectiveStock = isService ? 999 : product.stock + originalQty;
 
@@ -104,17 +102,26 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
     if (paidAmount < total - 0.01) return alert("Pagamento insuficiente");
     const customer = customers.find(c => c.id === selectedCustomerId);
     
+    // CORREÇÃO: Cálculo correto das taxas no momento da finalização
+    const paymentEntries: PaymentEntry[] = payments.map(p => {
+      const method = paymentMethods.find(m => m.id === p.methodId);
+      const feePercent = method?.feePercent || 0;
+      const feeAmount = (p.amount * feePercent) / 100;
+      
+      return {
+        method: method?.name || 'Outro',
+        amount: p.amount,
+        feeAmount: feeAmount
+      };
+    });
+
     onCompleteSale({
       id: editingSale ? editingSale.id : nextSaleNumber.toString().padStart(6, '0'),
       items: [...cart],
       total,
       change: changeAmount,
       timestamp: editingSale ? editingSale.timestamp : Date.now(),
-      payments: payments.map(p => ({
-        method: paymentMethods.find(m => m.id === p.methodId)?.name || 'Outro',
-        amount: p.amount,
-        feeAmount: 0
-      })),
+      payments: paymentEntries,
       customerId: customer?.id,
       customerName: customer?.name
     });
@@ -219,9 +226,9 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
               {editingSale && (
                 <button 
                   onClick={onCancelEdit}
-                  className="bg-red-100 text-red-600 text-[10px] font-black px-2 py-1 rounded-full uppercase hover:bg-red-200"
+                  className="bg-slate-200 text-slate-600 text-[10px] font-black px-2 py-1 rounded-full uppercase hover:bg-slate-300"
                 >
-                  Cancelar Edição
+                  Voltar
                 </button>
               )}
               <span className="bg-slate-200 text-slate-600 text-[10px] font-black px-2 py-1 rounded-full uppercase">
@@ -279,16 +286,28 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
               <span className="text-3xl font-black text-orange-500">R$ {total.toFixed(2)}</span>
             </div>
           </div>
-          <button 
-            disabled={cart.length === 0} 
-            onClick={() => { 
-              if (payments.length === 0) setPayments([{methodId: paymentMethods[0].id, amount: total}]); 
-              setShowPaymentModal(true); 
-            }} 
-            className={`w-full py-4 rounded-2xl font-black text-lg shadow-xl transition-all active:scale-95 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed ${editingSale ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-900/40' : 'bg-orange-600 hover:bg-orange-700 shadow-orange-900/40'}`}
-          >
-            {editingSale ? 'SALVAR ALTERAÇÕES' : 'FINALIZAR VENDA'}
-          </button>
+          
+          <div className="flex flex-col gap-2">
+            <button 
+              disabled={cart.length === 0} 
+              onClick={() => { 
+                if (payments.length === 0) setPayments([{methodId: paymentMethods[0].id, amount: total}]); 
+                setShowPaymentModal(true); 
+              }} 
+              className={`w-full py-4 rounded-2xl font-black text-lg shadow-xl transition-all active:scale-95 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed ${editingSale ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-900/40' : 'bg-orange-600 hover:bg-orange-700 shadow-orange-900/40'}`}
+            >
+              {editingSale ? 'SALVAR ALTERAÇÕES' : 'FINALIZAR VENDA'}
+            </button>
+
+            {editingSale && onDeleteSale && (
+              <button 
+                onClick={() => onDeleteSale(editingSale.id)}
+                className="w-full py-2 bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white rounded-xl text-[10px] font-black uppercase transition-all"
+              >
+                🗑️ CANCELAR VENDA PERMANENTEMENTE
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
