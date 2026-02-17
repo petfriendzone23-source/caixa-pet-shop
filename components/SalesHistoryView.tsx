@@ -5,9 +5,10 @@ import { Sale } from '../types';
 interface SalesHistoryViewProps {
   sales: Sale[];
   onOpenReceipt: (sale: Sale) => void;
+  onEditSale: (sale: Sale) => void;
 }
 
-const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({ sales, onOpenReceipt }) => {
+const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({ sales, onOpenReceipt, onEditSale }) => {
   const [filterDate, setFilterDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [search, setSearch] = useState('');
 
@@ -50,7 +51,7 @@ const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({ sales, onOpenReceip
             <label className="text-[10px] font-black text-slate-400 uppercase">Buscar Código/Cliente</label>
             <input 
               type="text" 
-              placeholder="Ex: VND-..."
+              placeholder="Ex: 000001"
               className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-orange-500 bg-white w-64"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -115,13 +116,23 @@ const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({ sales, onOpenReceip
                   <td className="px-8 py-4 text-right font-black text-slate-900 text-sm">
                     R$ {sale.total.toFixed(2)}
                   </td>
-                  <td className="px-8 py-4 text-center">
-                    <button 
-                      onClick={() => onOpenReceipt(sale)}
-                      className="p-2 hover:bg-orange-50 text-orange-600 rounded-xl transition-all border border-transparent hover:border-orange-200 flex items-center gap-2 mx-auto text-xs font-bold"
-                    >
-                      <span>🖨️</span> Ver Recibo
-                    </button>
+                  <td className="px-8 py-4">
+                    <div className="flex justify-center gap-2">
+                      <button 
+                        onClick={() => onOpenReceipt(sale)}
+                        className="p-2 hover:bg-orange-50 text-orange-600 rounded-xl transition-all border border-transparent hover:border-orange-200 flex items-center gap-2 text-[10px] font-black uppercase"
+                        title="Ver Recibo"
+                      >
+                        🖨️
+                      </button>
+                      <button 
+                        onClick={() => onEditSale(sale)}
+                        className="p-2 hover:bg-blue-50 text-blue-600 rounded-xl transition-all border border-transparent hover:border-blue-200 flex items-center gap-2 text-[10px] font-black uppercase"
+                        title="Editar Venda"
+                      >
+                        ✏️ Editar
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Product, CartItem, Sale, PaymentMethod, PaymentEntry, Customer } from '../types.ts';
 import { CATEGORIES } from '../constants.ts';
 
@@ -9,9 +9,11 @@ interface POSViewProps {
   customers: Customer[];
   nextSaleNumber: number;
   onCompleteSale: (sale: Sale) => void;
+  editingSale?: Sale | null;
+  onCancelEdit?: () => void;
 }
 
-const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, nextSaleNumber, onCompleteSale }) => {
+const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, nextSaleNumber, onCompleteSale, editingSale, onCancelEdit }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [filter, setFilter] = useState('Todos');
   const [search, setSearch] = useState('');
@@ -23,9 +25,34 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
   const [bulkValue, setBulkValue] = useState<string>('');
   const scannerRef = useRef<HTMLInputElement>(null);
 
+  // Carrega dados se estiver editando
+  useEffect(() => {
+    if (editingSale) {
+      setCart(editingSale.items);
+      setSelectedCustomerId(editingSale.customerId || '');
+      // Mapeia pagamentos de volta para o formato do modal
+      const mappedPayments = editingSale.payments.map(p => {
+        const method = paymentMethods.find(m => m.name === p.method);
+        return {
+          methodId: method?.id || paymentMethods[0].id,
+          amount: p.amount
+        };
+      });
+      setPayments(mappedPayments);
+    } else {
+      setCart([]);
+      setSelectedCustomerId('');
+      setPayments([]);
+    }
+  }, [editingSale, paymentMethods]);
+
   const addToCart = (product: Product, quantity: number = 1) => {
     const isService = product.category === 'Serviços';
-    if (!isService && product.stock <= 0 && quantity >= 1) {
+    // Se estiver editando, precisamos considerar o estoque que "estava" na venda original
+    const originalQty = editingSale?.items.find(i => i.id === product.id)?.quantity || 0;
+    const effectiveStock = isService ? 999 : product.stock + originalQty;
+
+    if (!isService && effectiveStock <= 0 && quantity >= 1) {
       alert(`Produto "${product.name}" está sem estoque!`);
       return;
     }
@@ -61,7 +88,6 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
     if (!bulkModalProduct || !bulkValue) return;
     const value = parseFloat(bulkValue.replace(',', '.'));
     if (value > 0) {
-      // O usuário digita o valor em R$ que o cliente quer levar, o sistema calcula o peso
       const calculatedQty = value / bulkModalProduct.price;
       addToCart(bulkModalProduct, calculatedQty);
       setBulkModalProduct(null);
@@ -77,12 +103,13 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
   const handleFinalize = () => {
     if (paidAmount < total - 0.01) return alert("Pagamento insuficiente");
     const customer = customers.find(c => c.id === selectedCustomerId);
+    
     onCompleteSale({
-      id: nextSaleNumber.toString().padStart(6, '0'),
+      id: editingSale ? editingSale.id : nextSaleNumber.toString().padStart(6, '0'),
       items: [...cart],
       total,
       change: changeAmount,
-      timestamp: Date.now(),
+      timestamp: editingSale ? editingSale.timestamp : Date.now(),
       payments: payments.map(p => ({
         method: paymentMethods.find(m => m.id === p.methodId)?.name || 'Outro',
         amount: p.amount,
@@ -91,8 +118,11 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
       customerId: customer?.id,
       customerName: customer?.name
     });
-    setCart([]);
-    setPayments([]);
+
+    if (!editingSale) {
+      setCart([]);
+      setPayments([]);
+    }
     setShowPaymentModal(false);
   };
 
@@ -139,7 +169,10 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 overflow-y-auto pr-2">
           {filteredProducts.map(p => {
-            const outOfStock = p.category !== 'Serviços' && p.stock <= 0;
+            const originalQty = editingSale?.items.find(i => i.id === p.id)?.quantity || 0;
+            const effectiveStock = p.category === 'Serviços' ? 999 : p.stock + originalQty;
+            const outOfStock = p.category !== 'Serviços' && effectiveStock <= 0;
+            
             return (
               <div 
                 key={p.id} 
@@ -159,8 +192,8 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
                 <div className="flex justify-between items-end mt-2">
                   <p className="font-black text-slate-900 text-sm">R$ {p.price.toFixed(2)}</p>
                   {p.category !== 'Serviços' && (
-                    <span className={`text-[9px] font-bold ${p.stock < 5 ? 'text-red-500' : 'text-slate-400'}`}>
-                      Est: {p.stock}
+                    <span className={`text-[9px] font-bold ${effectiveStock < 5 ? 'text-red-500' : 'text-slate-400'}`}>
+                      Est: {effectiveStock.toFixed(p.unitType === 'kg' ? 1 : 0)}
                     </span>
                   )}
                 </div>
@@ -182,9 +215,19 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
             <h2 className="font-black text-slate-800 flex items-center gap-2">
               <span className="text-xl">🛒</span> Carrinho
             </h2>
-            <span className="bg-slate-200 text-slate-600 text-[10px] font-black px-2 py-1 rounded-full uppercase">
-              {cart.length} itens
-            </span>
+            <div className="flex gap-2">
+              {editingSale && (
+                <button 
+                  onClick={onCancelEdit}
+                  className="bg-red-100 text-red-600 text-[10px] font-black px-2 py-1 rounded-full uppercase hover:bg-red-200"
+                >
+                  Cancelar Edição
+                </button>
+              )}
+              <span className="bg-slate-200 text-slate-600 text-[10px] font-black px-2 py-1 rounded-full uppercase">
+                {cart.length} itens
+              </span>
+            </div>
           </div>
           <select 
             className="w-full mt-4 p-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-orange-500 bg-white"
@@ -239,12 +282,12 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
           <button 
             disabled={cart.length === 0} 
             onClick={() => { 
-              setPayments([{methodId: paymentMethods[0].id, amount: total}]); 
+              if (payments.length === 0) setPayments([{methodId: paymentMethods[0].id, amount: total}]); 
               setShowPaymentModal(true); 
             }} 
-            className="w-full py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl font-black text-lg shadow-xl shadow-orange-900/40 transition-all active:scale-95 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed"
+            className={`w-full py-4 rounded-2xl font-black text-lg shadow-xl transition-all active:scale-95 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed ${editingSale ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-900/40' : 'bg-orange-600 hover:bg-orange-700 shadow-orange-900/40'}`}
           >
-            FINALIZAR VENDA
+            {editingSale ? 'SALVAR ALTERAÇÕES' : 'FINALIZAR VENDA'}
           </button>
         </div>
       </div>
@@ -305,8 +348,8 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
       {showPaymentModal && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
           <div className="bg-white p-8 rounded-[40px] w-full max-w-md shadow-2xl border border-slate-100">
-            <h3 className="text-2xl font-black text-slate-900 mb-2">Finalizar Pagamento</h3>
-            <p className="text-sm text-slate-500 font-medium mb-6">Selecione as formas de pagamento para o total de:</p>
+            <h3 className="text-2xl font-black text-slate-900 mb-2">{editingSale ? 'Atualizar Pagamento' : 'Finalizar Pagamento'}</h3>
+            <p className="text-sm text-slate-500 font-medium mb-6">Total da venda:</p>
             
             <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 mb-8 flex justify-between items-center">
               <span className="text-slate-500 font-black uppercase text-xs tracking-widest">Total a Pagar</span>
@@ -371,9 +414,9 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
               <button 
                 disabled={paidAmount < total - 0.01}
                 onClick={handleFinalize} 
-                className="w-full py-5 bg-orange-600 text-white rounded-[24px] font-black text-lg shadow-xl shadow-orange-100 hover:bg-orange-700 transition-all active:scale-95 disabled:opacity-50 disabled:grayscale"
+                className={`w-full py-5 text-white rounded-[24px] font-black text-lg shadow-xl transition-all active:scale-95 disabled:opacity-50 disabled:grayscale ${editingSale ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-100' : 'bg-orange-600 hover:bg-orange-700 shadow-orange-100'}`}
               >
-                CONCLUIR VENDA
+                {editingSale ? 'SALVAR ALTERAÇÕES' : 'CONCLUIR VENDA'}
               </button>
               <button 
                 onClick={() => setShowPaymentModal(false)} 

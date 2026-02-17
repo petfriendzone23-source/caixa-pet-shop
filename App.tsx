@@ -38,6 +38,7 @@ const App: React.FC = () => {
   const [nextSaleNumber, setNextSaleNumber] = useState<number>(1);
   const [currentView, setCurrentView] = useState<View>('pos');
   const [lastSale, setLastSale] = useState<Sale | null>(null);
+  const [editingSale, setEditingSale] = useState<Sale | null>(null);
 
   useEffect(() => {
     const session = localStorage.getItem('nxpet_session');
@@ -105,6 +106,39 @@ const App: React.FC = () => {
     setLastSale(sale);
   };
 
+  const handleUpdateSale = (updatedSale: Sale) => {
+    if (!editingSale) return;
+
+    setProducts(prev => {
+      const newProducts = [...prev];
+      // 1. Devolve o estoque da venda antiga
+      editingSale.items.forEach(oldItem => {
+        const pIdx = newProducts.findIndex(p => p.id === oldItem.id);
+        if (pIdx > -1 && newProducts[pIdx].category !== 'Serviços') {
+          newProducts[pIdx].stock += oldItem.quantity;
+        }
+      });
+      // 2. Retira o estoque da venda nova/editada
+      updatedSale.items.forEach(newItem => {
+        const pIdx = newProducts.findIndex(p => p.id === newItem.id);
+        if (pIdx > -1 && newProducts[pIdx].category !== 'Serviços') {
+          newProducts[pIdx].stock = Math.max(0, newProducts[pIdx].stock - newItem.quantity);
+        }
+      });
+      return newProducts;
+    });
+
+    setSales(prev => prev.map(s => s.id === editingSale.id ? updatedSale : s));
+    setEditingSale(null);
+    setCurrentView('sales');
+    alert('Venda atualizada com sucesso e estoque recalculado!');
+  };
+
+  const handleStartEditSale = (sale: Sale) => {
+    setEditingSale(sale);
+    setCurrentView('pos');
+  };
+
   const handleUpdateStock = (id: string, newStock: number) => {
     setProducts(prev => prev.map(p => p.id === id ? { ...p, stock: newStock } : p));
   };
@@ -170,9 +204,19 @@ const App: React.FC = () => {
   const renderView = () => {
     switch (currentView) {
       case 'pos':
-        return <POSView products={products} paymentMethods={paymentMethods} customers={customers} nextSaleNumber={nextSaleNumber} onCompleteSale={handleCompleteSale} />;
+        return (
+          <POSView 
+            products={products} 
+            paymentMethods={paymentMethods} 
+            customers={customers} 
+            nextSaleNumber={nextSaleNumber} 
+            onCompleteSale={editingSale ? handleUpdateSale : handleCompleteSale}
+            editingSale={editingSale}
+            onCancelEdit={() => { setEditingSale(null); setCurrentView('sales'); }}
+          />
+        );
       case 'sales':
-        return <SalesHistoryView sales={sales} onOpenReceipt={(sale) => setLastSale(sale)} />;
+        return <SalesHistoryView sales={sales} onOpenReceipt={(sale) => setLastSale(sale)} onEditSale={handleStartEditSale} />;
       case 'inventory':
         return <InventoryView products={products} onUpdateStock={handleUpdateStock} onSaveProduct={handleSaveProduct} onDeleteProduct={handleDeleteProduct} />;
       case 'customers':
@@ -188,7 +232,7 @@ const App: React.FC = () => {
 
   const getViewTitle = () => {
     switch (currentView) {
-      case 'pos': return 'Ponto de Venda';
+      case 'pos': return editingSale ? `Editando Venda #${editingSale.id}` : 'Ponto de Venda';
       case 'sales': return 'Consulta de Vendas';
       case 'inventory': return 'Estoque e Catálogo';
       case 'customers': return 'Clientes';
@@ -199,7 +243,7 @@ const App: React.FC = () => {
 
   return (
     <div className="flex min-h-screen bg-slate-50">
-      <Sidebar currentView={currentView} setView={setCurrentView} onLogout={handleLogout} />
+      <Sidebar currentView={currentView} setView={(v) => { setEditingSale(null); setCurrentView(v); }} onLogout={handleLogout} />
       <main className="flex-1 flex flex-col p-8 print:p-0">
         <header className="flex justify-between items-center mb-8 print:hidden">
           <div>
