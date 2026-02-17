@@ -1,16 +1,16 @@
 
 import React, { useState, useEffect } from 'react';
-import { Product, Sale, View, PaymentMethod, Customer, CompanyInfo } from './types.ts';
-import { INITIAL_PRODUCTS } from './constants.ts';
-import Sidebar from './components/Sidebar.tsx';
-import POSView from './components/POSView.tsx';
-import InventoryView from './components/InventoryView.tsx';
-import DashboardView from './components/DashboardView.tsx';
-import SettingsView from './components/SettingsView.tsx';
-import CustomerView from './components/CustomerView.tsx';
-import SalesHistoryView from './components/SalesHistoryView.tsx';
-import ReceiptModal from './components/ReceiptModal.tsx';
-import LoginView from './components/LoginView.tsx';
+import { Product, Sale, View, PaymentMethod, Customer, CompanyInfo } from './types';
+import { INITIAL_PRODUCTS } from './constants';
+import Sidebar from './components/Sidebar';
+import POSView from './components/POSView';
+import InventoryView from './components/InventoryView';
+import DashboardView from './components/DashboardView';
+import SettingsView from './components/SettingsView';
+import CustomerView from './components/CustomerView';
+import SalesHistoryView from './components/SalesHistoryView';
+import ReceiptModal from './components/ReceiptModal';
+import LoginView from './components/LoginView';
 
 const DEFAULT_PAYMENTS: PaymentMethod[] = [
   { id: 'p1', name: 'Dinheiro', icon: '💵', feePercent: 0 },
@@ -40,7 +40,6 @@ const App: React.FC = () => {
   const [lastSale, setLastSale] = useState<Sale | null>(null);
 
   useEffect(() => {
-    // Verificar sessão ativa de forma segura
     const session = localStorage.getItem('nxpet_session');
     if (session) {
       setIsAuthenticated(true);
@@ -52,7 +51,6 @@ const App: React.FC = () => {
         const item = localStorage.getItem(key);
         return item ? JSON.parse(item) : defaultValue;
       } catch (e) {
-        console.error(`Erro ao carregar ${key}:`, e);
         return defaultValue;
       }
     };
@@ -71,16 +69,12 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      try {
-        localStorage.setItem('nxpet_products', JSON.stringify(products));
-        localStorage.setItem('nxpet_sales', JSON.stringify(sales));
-        localStorage.setItem('nxpet_payments', JSON.stringify(paymentMethods));
-        localStorage.setItem('nxpet_customers', JSON.stringify(customers));
-        localStorage.setItem('nxpet_company', JSON.stringify(companyInfo));
-        localStorage.setItem('nxpet_next_sale_number', nextSaleNumber.toString());
-      } catch (e) {
-        console.error("Erro ao salvar no localStorage:", e);
-      }
+      localStorage.setItem('nxpet_products', JSON.stringify(products));
+      localStorage.setItem('nxpet_sales', JSON.stringify(sales));
+      localStorage.setItem('nxpet_payments', JSON.stringify(paymentMethods));
+      localStorage.setItem('nxpet_customers', JSON.stringify(customers));
+      localStorage.setItem('nxpet_company', JSON.stringify(companyInfo));
+      localStorage.setItem('nxpet_next_sale_number', nextSaleNumber.toString());
     }
   }, [products, sales, paymentMethods, customers, nextSaleNumber, companyInfo, isAuthenticated]);
 
@@ -128,7 +122,7 @@ const App: React.FC = () => {
   };
 
   const handleDeleteProduct = (id: string) => {
-    if (window.confirm('Tem certeza que deseja excluir este produto?')) {
+    if (window.confirm('Excluir este produto?')) {
       setProducts(prev => prev.filter(p => p.id !== id));
     }
   };
@@ -176,52 +170,17 @@ const App: React.FC = () => {
   const renderView = () => {
     switch (currentView) {
       case 'pos':
-        return (
-          <POSView 
-            products={products} 
-            paymentMethods={paymentMethods}
-            customers={customers}
-            nextSaleNumber={nextSaleNumber}
-            onCompleteSale={handleCompleteSale} 
-          />
-        );
+        return <POSView products={products} paymentMethods={paymentMethods} customers={customers} nextSaleNumber={nextSaleNumber} onCompleteSale={handleCompleteSale} />;
       case 'sales':
-        return (
-          <SalesHistoryView 
-            sales={sales}
-            onOpenReceipt={(sale) => setLastSale(sale)}
-          />
-        );
+        return <SalesHistoryView sales={sales} onOpenReceipt={(sale) => setLastSale(sale)} />;
       case 'inventory':
-        return (
-          <InventoryView 
-            products={products} 
-            onUpdateStock={handleUpdateStock} 
-            onSaveProduct={handleSaveProduct}
-            onDeleteProduct={handleDeleteProduct}
-          />
-        );
+        return <InventoryView products={products} onUpdateStock={handleUpdateStock} onSaveProduct={handleSaveProduct} onDeleteProduct={handleDeleteProduct} />;
       case 'customers':
-        return (
-          <CustomerView 
-            customers={customers}
-            onSaveCustomer={handleSaveCustomer}
-            onDeleteCustomer={handleDeleteCustomer}
-          />
-        );
+        return <CustomerView customers={customers} onSaveCustomer={handleSaveCustomer} onDeleteCustomer={handleDeleteCustomer} />;
       case 'dashboard':
         return <DashboardView sales={sales} />;
       case 'settings':
-        return (
-          <SettingsView 
-            paymentMethods={paymentMethods}
-            companyInfo={companyInfo}
-            onAddMethod={handleAddPayment}
-            onRemoveMethod={handleRemovePayment}
-            onUpdateMethodFee={handleUpdatePaymentFee}
-            onUpdateCompanyInfo={setCompanyInfo}
-          />
-        );
+        return <SettingsView paymentMethods={paymentMethods} companyInfo={companyInfo} onAddMethod={handleAddPayment} onRemoveMethod={handleRemovePayment} onUpdateMethodFee={handleUpdatePaymentFee} onUpdateCompanyInfo={setCompanyInfo} />;
       default:
         return <POSView products={products} paymentMethods={paymentMethods} customers={customers} nextSaleNumber={nextSaleNumber} onCompleteSale={handleCompleteSale} />;
     }
@@ -229,51 +188,37 @@ const App: React.FC = () => {
 
   const getViewTitle = () => {
     switch (currentView) {
-      case 'pos': return 'Ponto de Venda (PDV)';
+      case 'pos': return 'Ponto de Venda';
       case 'sales': return 'Consulta de Vendas';
       case 'inventory': return 'Estoque e Catálogo';
-      case 'customers': return 'Gestão de Clientes';
-      case 'dashboard': return 'Relatórios de Vendas';
-      case 'settings': return 'Configurações de Pagamento';
+      case 'customers': return 'Clientes';
+      case 'dashboard': return 'Relatórios';
+      case 'settings': return 'Configurações';
     }
   };
 
   return (
     <div className="flex min-h-screen bg-slate-50">
       <Sidebar currentView={currentView} setView={setCurrentView} onLogout={handleLogout} />
-      
       <main className="flex-1 flex flex-col p-8 print:p-0">
         <header className="flex justify-between items-center mb-8 print:hidden">
           <div>
-            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-              {getViewTitle()}
-            </h2>
-            <p className="text-slate-500 mt-1">{companyInfo.name}: Gestão Profissional</p>
+            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">{getViewTitle()}</h2>
+            <p className="text-slate-500 mt-1">{companyInfo.name}</p>
           </div>
-          
           <div className="flex items-center gap-4">
-            <div className="flex -space-x-2">
-              <img className="inline-block h-10 w-10 rounded-full ring-2 ring-white border-2 border-orange-500" src={`https://ui-avatars.com/api/?name=${currentUser}&background=f97316&color=fff&bold=true`} alt="User" />
-            </div>
+            <img className="h-10 w-10 rounded-full border-2 border-orange-500" src={`https://ui-avatars.com/api/?name=${currentUser}&background=f97316&color=fff`} alt="User" />
             <div className="text-right">
-              <p className="text-sm font-bold text-slate-800 uppercase tracking-tighter">{currentUser}</p>
-              <p className="text-xs text-slate-500">Operador Ativo</p>
+              <p className="text-sm font-bold text-slate-800">{currentUser}</p>
+              <p className="text-xs text-slate-500">Operador</p>
             </div>
           </div>
         </header>
-
         <section className="flex-1 overflow-hidden print:overflow-visible">
           {renderView()}
         </section>
       </main>
-
-      {lastSale && (
-        <ReceiptModal 
-          sale={lastSale} 
-          companyInfo={companyInfo}
-          onClose={() => setLastSale(null)} 
-        />
-      )}
+      {lastSale && <ReceiptModal sale={lastSale} companyInfo={companyInfo} onClose={() => setLastSale(null)} />}
     </div>
   );
 };
