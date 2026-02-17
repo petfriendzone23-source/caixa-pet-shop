@@ -30,7 +30,6 @@ const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
-  const [swStatus, setSwStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
@@ -42,26 +41,16 @@ const App: React.FC = () => {
   const [lastSale, setLastSale] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
 
-  // Monitorar status da internet e do Service Worker
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.ready.then(() => setSwStatus('ready'));
-    } else {
-      setSwStatus('ready'); // Fallback para navegadores sem SW (não funcionará offline)
-    }
-
+    const handleStatus = () => setIsOnline(navigator.onLine);
+    window.addEventListener('online', handleStatus);
+    window.addEventListener('offline', handleStatus);
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', handleStatus);
+      window.removeEventListener('offline', handleStatus);
     };
   }, []);
 
-  // Carregamento inicial do banco de dados local
   useEffect(() => {
     const session = localStorage.getItem('nxpet_session');
     if (session) {
@@ -69,28 +58,19 @@ const App: React.FC = () => {
       setCurrentUser(session);
     }
 
-    const loadFromStorage = (key: string, defaultValue: any) => {
-      try {
-        const item = localStorage.getItem(key);
-        return item ? JSON.parse(item) : defaultValue;
-      } catch (e) {
-        return defaultValue;
-      }
+    const load = (key: string, def: any) => {
+      const item = localStorage.getItem(key);
+      try { return item ? JSON.parse(item) : def; } catch { return def; }
     };
 
-    setProducts(loadFromStorage('nxpet_products', INITIAL_PRODUCTS));
-    setSales(loadFromStorage('nxpet_sales', []));
-    setPaymentMethods(loadFromStorage('nxpet_payments', DEFAULT_PAYMENTS));
-    setCustomers(loadFromStorage('nxpet_customers', []));
-    setCompanyInfo(loadFromStorage('nxpet_company', DEFAULT_COMPANY));
-
-    const savedNextNumber = localStorage.getItem('nxpet_next_sale_number');
-    if (savedNextNumber) {
-      setNextSaleNumber(parseInt(savedNextNumber) || 1);
-    }
+    setProducts(load('nxpet_products', INITIAL_PRODUCTS));
+    setSales(load('nxpet_sales', []));
+    setPaymentMethods(load('nxpet_payments', DEFAULT_PAYMENTS));
+    setCustomers(load('nxpet_customers', []));
+    setCompanyInfo(load('nxpet_company', DEFAULT_COMPANY));
+    setNextSaleNumber(parseInt(localStorage.getItem('nxpet_next_sale_number') || '1'));
   }, []);
 
-  // Sincronização automática para o disco rígido (via LocalStorage)
   useEffect(() => {
     if (isAuthenticated) {
       localStorage.setItem('nxpet_products', JSON.stringify(products));
@@ -102,225 +82,61 @@ const App: React.FC = () => {
     }
   }, [products, sales, paymentMethods, customers, nextSaleNumber, companyInfo, isAuthenticated]);
 
-  const handleLogin = (username: string) => {
-    setIsAuthenticated(true);
-    setCurrentUser(username);
-    localStorage.setItem('nxpet_session', username);
-  };
-
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    setCurrentUser(null);
-    localStorage.removeItem('nxpet_session');
-    setCurrentView('pos');
-  };
+  const handleLogin = (u: string) => { setIsAuthenticated(true); setCurrentUser(u); localStorage.setItem('nxpet_session', u); };
+  const handleLogout = () => { setIsAuthenticated(false); setCurrentUser(null); localStorage.removeItem('nxpet_session'); };
 
   const handleCompleteSale = (sale: Sale) => {
     setSales(prev => [sale, ...prev]);
     setProducts(prev => prev.map(p => {
-      const soldItem = sale.items.find(item => item.id === p.id);
-      if (soldItem) {
-        const newStock = p.category === 'Serviços' ? p.stock : Math.max(0, p.stock - soldItem.quantity);
-        return { ...p, stock: newStock };
-      }
+      const item = sale.items.find(i => i.id === p.id);
+      if (item && p.category !== 'Serviços') return { ...p, stock: Math.max(0, p.stock - item.quantity) };
       return p;
     }));
-    setNextSaleNumber(prev => prev + 1);
+    setNextSaleNumber(n => n + 1);
     setLastSale(sale);
   };
 
-  const handleUpdateSale = (updatedSale: Sale) => {
-    if (!editingSale) return;
-    setProducts(prev => {
-      const newProducts = [...prev];
-      editingSale.items.forEach(oldItem => {
-        const pIdx = newProducts.findIndex(p => p.id === oldItem.id);
-        if (pIdx > -1 && newProducts[pIdx].category !== 'Serviços') {
-          newProducts[pIdx].stock += oldItem.quantity;
-        }
-      });
-      updatedSale.items.forEach(newItem => {
-        const pIdx = newProducts.findIndex(p => p.id === newItem.id);
-        if (pIdx > -1 && newProducts[pIdx].category !== 'Serviços') {
-          newProducts[pIdx].stock = Math.max(0, newProducts[pIdx].stock - newItem.quantity);
-        }
-      });
-      return newProducts;
-    });
-    setSales(prev => prev.map(s => s.id === editingSale.id ? updatedSale : s));
-    setEditingSale(null);
-    setCurrentView('sales');
-  };
-
-  const handleDeleteSale = (saleId: string) => {
-    const saleToDelete = sales.find(s => s.id === saleId);
-    if (!saleToDelete) return;
-    if (window.confirm(`⚠️ EXCLUIR DEFINITIVAMENTE: A venda #${saleId} será apagada e o estoque será devolvido.`)) {
-      setProducts(prev => {
-        const newProducts = [...prev];
-        saleToDelete.items.forEach(item => {
-          const pIdx = newProducts.findIndex(p => p.id === item.id);
-          if (pIdx > -1 && newProducts[pIdx].category !== 'Serviços') {
-            newProducts[pIdx].stock += item.quantity;
-          }
-        });
-        return newProducts;
-      });
-      setSales(prev => prev.filter(s => s.id !== saleId));
-      setEditingSale(null);
-      setCurrentView('sales');
-    }
-  };
-
-  const handleStartEditSale = (sale: Sale) => {
-    setEditingSale(sale);
-    setCurrentView('pos');
-  };
-
-  const handleUpdateStock = (id: string, newStock: number) => {
-    setProducts(prev => prev.map(p => p.id === id ? { ...p, stock: newStock } : p));
-  };
-
-  const handleSaveProduct = (product: Product) => {
-    setProducts(prev => {
-      const index = prev.findIndex(p => p.id === product.id);
-      if (index >= 0) {
-        const updated = [...prev];
-        updated[index] = product;
-        return updated;
-      }
-      return [product, ...prev];
-    });
-  };
-
-  const handleDeleteProduct = (id: string) => {
-    if (window.confirm('Excluir este produto?')) {
-      setProducts(prev => prev.filter(p => p.id !== id));
-    }
-  };
-
-  const handleSaveCustomer = (customer: Customer) => {
-    setCustomers(prev => {
-      const index = prev.findIndex(c => c.id === customer.id);
-      if (index >= 0) {
-        const updated = [...prev];
-        updated[index] = customer;
-        return updated;
-      }
-      return [customer, ...prev];
-    });
-  };
-
-  const handleDeleteCustomer = (id: string) => {
-    if (window.confirm('Excluir este cliente?')) {
-      setCustomers(prev => prev.filter(c => c.id !== id));
-    }
-  };
-
-  const handleAddPayment = (name: string, feePercent: number) => {
-    const newMethod: PaymentMethod = {
-      id: Math.random().toString(36).substr(2, 9),
-      name,
-      icon: '💰',
-      feePercent: feePercent
-    };
-    setPaymentMethods(prev => [...prev, newMethod]);
-  };
-
-  const handleRemovePayment = (id: string) => {
-    setPaymentMethods(prev => prev.filter(m => m.id !== id));
-  };
-
-  const handleUpdatePaymentFee = (id: string, feePercent: number) => {
-    setPaymentMethods(prev => prev.map(m => m.id === id ? { ...m, feePercent } : m));
-  };
-
-  if (!isAuthenticated) {
-    return <LoginView onLogin={handleLogin} />;
-  }
-
   const renderView = () => {
     switch (currentView) {
-      case 'pos':
-        return <POSView products={products} paymentMethods={paymentMethods} customers={customers} nextSaleNumber={nextSaleNumber} onCompleteSale={editingSale ? handleUpdateSale : handleCompleteSale} editingSale={editingSale} onCancelEdit={() => { setEditingSale(null); setCurrentView('sales'); }} onDeleteSale={handleDeleteSale} />;
-      case 'sales':
-        return <SalesHistoryView sales={sales} onOpenReceipt={(sale) => setLastSale(sale)} onEditSale={handleStartEditSale} />;
-      case 'inventory':
-        return <InventoryView products={products} onUpdateStock={handleUpdateStock} onSaveProduct={handleSaveProduct} onDeleteProduct={handleDeleteProduct} />;
-      case 'customers':
-        return <CustomerView customers={customers} onSaveCustomer={handleSaveCustomer} onDeleteCustomer={handleDeleteCustomer} />;
-      case 'dashboard':
-        return <DashboardView sales={sales} />;
-      case 'settings':
-        return <SettingsView paymentMethods={paymentMethods} companyInfo={companyInfo} onAddMethod={handleAddPayment} onRemoveMethod={handleRemovePayment} onUpdateMethodFee={handleUpdatePaymentFee} onUpdateCompanyInfo={setCompanyInfo} />;
-      default:
-        return <POSView products={products} paymentMethods={paymentMethods} customers={customers} nextSaleNumber={nextSaleNumber} onCompleteSale={handleCompleteSale} />;
+      case 'pos': return <POSView products={products} paymentMethods={paymentMethods} customers={customers} nextSaleNumber={nextSaleNumber} onCompleteSale={handleCompleteSale} editingSale={editingSale} onCancelEdit={() => setEditingSale(null)} />;
+      case 'sales': return <SalesHistoryView sales={sales} onOpenReceipt={setLastSale} onEditSale={(s) => { setEditingSale(s); setCurrentView('pos'); }} />;
+      case 'inventory': return <InventoryView products={products} onUpdateStock={(id, s) => setProducts(products.map(p => p.id === id ? {...p, stock: s} : p))} onSaveProduct={(p) => setProducts(products.find(x => x.id === p.id) ? products.map(x => x.id === p.id ? p : x) : [p, ...products])} onDeleteProduct={(id) => setProducts(products.filter(p => p.id !== id))} />;
+      case 'customers': return <CustomerView customers={customers} onSaveCustomer={(c) => setCustomers(customers.find(x => x.id === c.id) ? customers.map(x => x.id === c.id ? c : x) : [c, ...customers])} onDeleteCustomer={(id) => setCustomers(customers.filter(c => c.id !== id))} />;
+      case 'dashboard': return <DashboardView sales={sales} />;
+      case 'settings': return <SettingsView paymentMethods={paymentMethods} companyInfo={companyInfo} onAddMethod={(n, f) => setPaymentMethods([...paymentMethods, {id: Math.random().toString(), name: n, feePercent: f, icon: '💰'}])} onRemoveMethod={(id) => setPaymentMethods(paymentMethods.filter(p => p.id !== id))} onUpdateMethodFee={(id, f) => setPaymentMethods(paymentMethods.map(p => p.id === id ? {...p, feePercent: f} : p))} onUpdateCompanyInfo={setCompanyInfo} />;
+      default: return null;
     }
   };
 
-  const getViewTitle = () => {
-    switch (currentView) {
-      case 'pos': return editingSale ? `Editando Venda #${editingSale.id}` : 'Ponto de Venda';
-      case 'sales': return 'Consulta de Vendas';
-      case 'inventory': return 'Estoque e Catálogo';
-      case 'customers': return 'Clientes';
-      case 'dashboard': return 'Relatórios';
-      case 'settings': return 'Configurações';
-    }
-  };
+  if (!isAuthenticated) return <LoginView onLogin={handleLogin} />;
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
-      <Sidebar currentView={currentView} setView={(v) => { setEditingSale(null); setCurrentView(v); }} onLogout={handleLogout} />
-      <main className="flex-1 flex flex-col p-8 print:p-0">
-        
-        {/* Banner de Sincronização */}
-        {!isOnline && (
-          <div className="mb-6 bg-orange-600 text-white px-6 py-3 rounded-2xl flex items-center justify-between shadow-lg animate-pulse">
-            <div className="flex items-center gap-3">
-              <span className="text-xl">⚠️</span>
-              <div>
-                <p className="font-black text-sm uppercase tracking-widest">Modo Offline Ativado</p>
-                <p className="text-[10px] font-bold opacity-80">Você pode continuar vendendo. Os dados serão salvos no computador.</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {isOnline && swStatus === 'loading' && (
-          <div className="mb-6 bg-blue-600 text-white px-6 py-3 rounded-2xl flex items-center justify-between shadow-lg">
-            <div className="flex items-center gap-3">
-              <span className="text-xl">⏳</span>
-              <div>
-                <p className="font-black text-sm uppercase tracking-widest">Preparando Modo Offline</p>
-                <p className="text-[10px] font-bold opacity-80">Baixando arquivos necessários. Por favor, não feche agora...</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <header className="flex justify-between items-center mb-8 print:hidden">
+    <div className="flex h-screen bg-slate-50 overflow-hidden">
+      <Sidebar currentView={currentView} setView={setCurrentView} onLogout={handleLogout} />
+      <main className="flex-1 flex flex-col min-w-0">
+        <header className="flex justify-between items-center p-8 pb-4 print:hidden">
           <div>
-            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">{getViewTitle()}</h2>
-            <div className="flex items-center gap-3 mt-1 font-bold">
-               <p className="text-slate-500">{companyInfo.name}</p>
-               <span className="text-slate-300">|</span>
-               {isOnline ? (
-                 <span className="text-green-600 flex items-center gap-1 text-[10px] font-black uppercase tracking-widest">● Conectado</span>
-               ) : (
-                 <span className="text-orange-600 flex items-center gap-1 text-[10px] font-black uppercase tracking-widest">▲ Local</span>
-               )}
+            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight uppercase">
+              {currentView === 'pos' ? 'PDV' : currentView === 'sales' ? 'Histórico' : currentView === 'inventory' ? 'Estoque' : currentView === 'customers' ? 'Clientes' : currentView === 'dashboard' ? 'Relatórios' : 'Configurações'}
+            </h2>
+            <div className="flex items-center gap-2 mt-1">
+              <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-orange-500'}`}></span>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{isOnline ? 'Online' : 'Modo Offline'}</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <img className="h-10 w-10 rounded-full border-2 border-orange-500" src={`https://ui-avatars.com/api/?name=${currentUser}&background=f97316&color=fff`} alt="User" />
             <div className="text-right">
               <p className="text-sm font-bold text-slate-800">{currentUser}</p>
-              <p className="text-xs text-slate-500 uppercase font-black text-[9px] tracking-widest">Administrador</p>
+              <p className="text-[9px] text-slate-500 font-black uppercase">Admin</p>
+            </div>
+            <div className="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
+              {currentUser?.charAt(0).toUpperCase()}
             </div>
           </div>
         </header>
-        <section className="flex-1 overflow-hidden print:overflow-visible">
+        
+        {/* ÁREA COM ROLAGEM HABILITADA - RESOLVE O PROBLEMA DE TRAVAMENTO */}
+        <section className="flex-1 overflow-y-auto px-8 pb-8 custom-scrollbar print:overflow-visible">
           {renderView()}
         </section>
       </main>
