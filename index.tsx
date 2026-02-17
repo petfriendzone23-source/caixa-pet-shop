@@ -3,15 +3,30 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
 
-// Registro do Service Worker para suporte PWA/Offline
+// Registro do Service Worker PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
+    // Adicionamos um timestamp para garantir que o navegador busque a versão mais nova do sw.js
+    navigator.serviceWorker.register('/sw.js?v=' + Date.now())
       .then((registration) => {
-        console.log('NexusPet ServiceWorker registrado com sucesso:', registration.scope);
+        console.log('NexusPet: ServiceWorker registrado v1.6');
+        
+        // Verifica atualizações automaticamente
+        registration.onupdatefound = () => {
+          const installingWorker = registration.installing;
+          if (installingWorker) {
+            installingWorker.onstatechange = () => {
+              if (installingWorker.state === 'installed') {
+                if (navigator.serviceWorker.controller) {
+                  console.log('NexusPet: Nova versão disponível! Reinicie para atualizar.');
+                }
+              }
+            };
+          }
+        };
       })
       .catch((error) => {
-        console.log('Falha ao registrar ServiceWorker:', error);
+        console.error('NexusPet: Falha ao registrar ServiceWorker:', error);
       });
   });
 }
