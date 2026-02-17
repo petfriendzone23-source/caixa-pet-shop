@@ -1,16 +1,16 @@
 
 import React, { useState, useEffect } from 'react';
-import { Product, Sale, View, PaymentMethod, Customer, CompanyInfo } from './types';
-import { INITIAL_PRODUCTS } from './constants';
-import Sidebar from './components/Sidebar';
-import POSView from './components/POSView';
-import InventoryView from './components/InventoryView';
-import DashboardView from './components/DashboardView';
-import SettingsView from './components/SettingsView';
-import CustomerView from './components/CustomerView';
-import SalesHistoryView from './components/SalesHistoryView';
-import ReceiptModal from './components/ReceiptModal';
-import LoginView from './components/LoginView';
+import { Product, Sale, View, PaymentMethod, Customer, CompanyInfo } from './types.ts';
+import { INITIAL_PRODUCTS } from './constants.ts';
+import Sidebar from './components/Sidebar.tsx';
+import POSView from './components/POSView.tsx';
+import InventoryView from './components/InventoryView.tsx';
+import DashboardView from './components/DashboardView.tsx';
+import SettingsView from './components/SettingsView.tsx';
+import CustomerView from './components/CustomerView.tsx';
+import SalesHistoryView from './components/SalesHistoryView.tsx';
+import ReceiptModal from './components/ReceiptModal.tsx';
+import LoginView from './components/LoginView.tsx';
 
 const DEFAULT_PAYMENTS: PaymentMethod[] = [
   { id: 'p1', name: 'Dinheiro', icon: '💵', feePercent: 0 },

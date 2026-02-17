@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
-import { Product, CartItem, Sale, PaymentMethod, PaymentEntry, Customer } from '../types';
-import { CATEGORIES } from '../constants';
+import { Product, CartItem, Sale, PaymentMethod, PaymentEntry, Customer } from '../types.ts';
+import { CATEGORIES } from '../constants.ts';
 
 interface POSViewProps {
   products: Product[];
@@ -400,10 +400,9 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
         </div>
       )}
 
-      {/* Payment Modal omitido para brevidade, permanece o mesmo */}
       {showPaymentModal && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden border border-slate-200">
+          <div className="bg-white rounded-3xl w-full max-md shadow-2xl overflow-hidden border border-slate-200">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
               <div className="flex flex-col">
                 <h3 className="text-xl font-black text-slate-900 tracking-tight">💰 Pagamento</h3>
