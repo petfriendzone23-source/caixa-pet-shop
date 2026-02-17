@@ -12,8 +12,6 @@ import SalesHistoryView from './components/SalesHistoryView.tsx';
 import ReceiptModal from './components/ReceiptModal.tsx';
 import LoginView from './components/LoginView.tsx';
 
-const SYSTEM_VERSION = '1.8.0';
-
 const DEFAULT_PAYMENTS: PaymentMethod[] = [
   { id: 'p1', name: 'Dinheiro', icon: '💵', feePercent: 0 },
   { id: 'p2', name: 'Cartão de Débito', icon: '💳', feePercent: 1.9 },
@@ -42,26 +40,7 @@ const App: React.FC = () => {
   const [lastSale, setLastSale] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
 
-  // Verificação de Atualização Forçada
-  useEffect(() => {
-    const savedVersion = localStorage.getItem('nxpet_version');
-    if (savedVersion !== SYSTEM_VERSION) {
-      console.log(`NexusPet: Atualizando de ${savedVersion} para ${SYSTEM_VERSION}`);
-      // Limpa caches do navegador
-      if ('caches' in window) {
-        caches.keys().then(names => {
-          for (let name of names) caches.delete(name);
-        });
-      }
-      localStorage.setItem('nxpet_version', SYSTEM_VERSION);
-      // Se já tinha uma versão antiga, força o reload para garantir que pegou o código novo
-      if (savedVersion) {
-        window.location.reload();
-      }
-    }
-  }, []);
-
-  // Carregamento inicial
+  // Carregamento inicial do banco de dados local
   useEffect(() => {
     const session = localStorage.getItem('nxpet_session');
     if (session) {
@@ -90,7 +69,7 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Sincronização
+  // Sincronização automática para o disco rígido (via LocalStorage)
   useEffect(() => {
     if (isAuthenticated) {
       localStorage.setItem('nxpet_products', JSON.stringify(products));
@@ -134,12 +113,14 @@ const App: React.FC = () => {
 
     setProducts(prev => {
       const newProducts = [...prev];
+      // Devolve estoque antigo
       editingSale.items.forEach(oldItem => {
         const pIdx = newProducts.findIndex(p => p.id === oldItem.id);
         if (pIdx > -1 && newProducts[pIdx].category !== 'Serviços') {
           newProducts[pIdx].stock += oldItem.quantity;
         }
       });
+      // Retira estoque novo
       updatedSale.items.forEach(newItem => {
         const pIdx = newProducts.findIndex(p => p.id === newItem.id);
         if (pIdx > -1 && newProducts[pIdx].category !== 'Serviços') {
@@ -152,13 +133,14 @@ const App: React.FC = () => {
     setSales(prev => prev.map(s => s.id === editingSale.id ? updatedSale : s));
     setEditingSale(null);
     setCurrentView('sales');
+    alert('Venda atualizada com sucesso no banco local!');
   };
 
   const handleDeleteSale = (saleId: string) => {
     const saleToDelete = sales.find(s => s.id === saleId);
     if (!saleToDelete) return;
 
-    if (window.confirm(`⚠️ EXCLUIR DEFINITIVAMENTE: A venda #${saleId} será apagada e o estoque será devolvido.`)) {
+    if (window.confirm(`⚠️ EXCLUIR DEFINITIVAMENTE: A venda #${saleId} será apagada e o estoque será devolvido. Prosseguir?`)) {
       setProducts(prev => {
         const newProducts = [...prev];
         saleToDelete.items.forEach(item => {
@@ -169,9 +151,11 @@ const App: React.FC = () => {
         });
         return newProducts;
       });
+
       setSales(prev => prev.filter(s => s.id !== saleId));
       setEditingSale(null);
       setCurrentView('sales');
+      alert('Venda cancelada e dados locais atualizados.');
     }
   };
 

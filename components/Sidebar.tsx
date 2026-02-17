@@ -22,11 +22,11 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout }) => 
     <aside className="w-64 bg-slate-900 text-white h-screen flex flex-col sticky top-0 print:hidden shadow-2xl">
       <div className="p-8">
         <h1 className="text-2xl font-black tracking-tighter flex items-center gap-3">
-          <span className="bg-orange-600 p-2 rounded-xl shadow-lg shadow-orange-900/50">🐾</span> NexusPet
+          <span className="bg-orange-600 p-2 rounded-xl">🐾</span> NexusPet
         </h1>
         <div className="mt-2 flex items-center gap-2">
           <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">PWA Ativo (Auto-Update)</span>
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Banco de Dados Local</span>
         </div>
       </div>
       <nav className="flex-1 mt-4 px-4 space-y-1">
@@ -36,7 +36,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout }) => 
             onClick={() => setView(item.id)}
             className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all ${
               currentView === item.id 
-                ? 'bg-orange-600 text-white shadow-lg shadow-orange-900/20' 
+                ? 'bg-orange-600 text-white' 
                 : 'text-slate-400 hover:bg-slate-800 hover:text-white'
             }`}
           >
@@ -45,22 +45,16 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout }) => 
           </button>
         ))}
       </nav>
-      <div className="p-4 border-t border-slate-800 bg-slate-900/50">
+      <div className="p-4 border-t border-slate-800">
         <div className="mb-4 px-4">
-           <div className="flex justify-between items-center mb-1">
-             <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Banco de Dados</p>
-             <p className="text-[9px] text-green-500 font-black uppercase">Local OK</p>
-           </div>
-           <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-              <div className="bg-orange-600 h-full w-[10%]"></div>
+           <p className="text-[9px] text-slate-500 font-bold uppercase">Armazenamento Local</p>
+           <div className="w-full bg-slate-800 h-1.5 rounded-full mt-1 overflow-hidden">
+              <div className="bg-orange-600 h-full w-[15%]"></div>
            </div>
         </div>
-        <button onClick={() => window.confirm('Sair do sistema?') && onLogout()} className="w-full flex items-center gap-4 px-5 py-3 rounded-xl text-slate-400 hover:text-red-400 hover:bg-red-500/10 font-bold uppercase text-[10px] transition-colors mb-2">
+        <button onClick={() => window.confirm('Sair do sistema?') && onLogout()} className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-red-400 hover:bg-red-500/10 font-bold uppercase text-xs">
           <span>🚪</span> Sair
         </button>
-        <div className="text-center">
-          <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest bg-slate-800 px-2 py-1 rounded">v1.8.0 Stable</span>
-        </div>
       </div>
     </aside>
   );

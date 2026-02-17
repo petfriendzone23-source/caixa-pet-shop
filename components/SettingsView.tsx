@@ -23,24 +23,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   const [newMethodFee, setNewMethodFee] = useState<number>(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleForceUpdate = () => {
-    if (window.confirm("Isso limpará os arquivos temporários do sistema para buscar a versão mais recente do Vercel. Seus dados (vendas/estoque) NÃO serão apagados. Continuar?")) {
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(registrations => {
-          for (let registration of registrations) registration.unregister();
-        });
-      }
-      if ('caches' in window) {
-        caches.keys().then(names => {
-          for (let name of names) caches.delete(name);
-        });
-      }
-      alert("Sistema reiniciado. A página irá recarregar agora.");
-      // Fix: window.location.reload() does not accept arguments in modern TypeScript/Browsers
-      window.location.reload();
-    }
-  };
-
   const handleMethodSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (newMethodName.trim()) {
@@ -64,7 +46,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
       company: JSON.parse(localStorage.getItem('nxpet_company') || '{}'),
       users: JSON.parse(localStorage.getItem('nxpet_users') || '[]'),
       nextSaleNumber: localStorage.getItem('nxpet_next_sale_number') || '1',
-      version: '1.8.0',
+      version: '1.5.0',
       exportDate: new Date().toISOString()
     };
 
@@ -79,6 +61,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+    alert("Backup gerado e salvo na sua pasta de Downloads!");
   };
 
   const handleImportClick = () => {
@@ -94,7 +77,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({
       try {
         const content = event.target?.result as string;
         const data = JSON.parse(content);
-        if (window.confirm("⚠️ ATENÇÃO: Isso apagará os dados atuais. Confirmar?")) {
+
+        if (!data.products || !data.sales) {
+          throw new Error("Arquivo inválido.");
+        }
+
+        if (window.confirm("⚠️ ATENÇÃO: Isso apagará os dados atuais e restaurará os do arquivo. Confirmar?")) {
           localStorage.setItem('nxpet_products', JSON.stringify(data.products));
           localStorage.setItem('nxpet_sales', JSON.stringify(data.sales));
           localStorage.setItem('nxpet_customers', JSON.stringify(data.customers || []));
@@ -102,10 +90,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           localStorage.setItem('nxpet_company', JSON.stringify(data.company || {}));
           localStorage.setItem('nxpet_users', JSON.stringify(data.users || []));
           localStorage.setItem('nxpet_next_sale_number', data.nextSaleNumber || '1');
+          
+          alert("Sistema restaurado com sucesso!");
           window.location.reload();
         }
       } catch (err) {
-        alert("Erro ao importar backup.");
+        alert("Erro ao importar backup: Arquivo corrompido ou inválido.");
       }
     };
     reader.readAsText(file);
@@ -116,17 +106,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     <div className="max-w-4xl space-y-8 pb-12">
       <div className="bg-slate-900 rounded-[40px] border border-slate-800 shadow-2xl overflow-hidden p-10 text-white relative">
         <div className="absolute top-0 right-0 p-12 opacity-10 text-9xl">💾</div>
-        <div className="mb-10 relative z-10 flex justify-between items-start">
-          <div>
-            <h3 className="text-3xl font-black mb-2 uppercase tracking-tighter">Gerenciamento de Dados</h3>
-            <p className="text-slate-400 font-medium">Backup e sincronização do sistema.</p>
-          </div>
-          <button 
-            onClick={handleForceUpdate}
-            className="px-4 py-2 bg-red-500/20 text-red-400 border border-red-500/30 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all"
-          >
-            🔄 Forçar Atualização PWA
-          </button>
+        <div className="mb-10 relative z-10">
+          <h3 className="text-3xl font-black mb-2 uppercase tracking-tighter">Backup Geral do Sistema</h3>
+          <p className="text-slate-400 font-medium">Salve todas as suas informações em um arquivo externo no seu computador.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
@@ -184,12 +166,23 @@ const SettingsView: React.FC<SettingsViewProps> = ({
               onChange={handleCompanyChange}
             />
           </div>
+          <div className="flex flex-col gap-1 md:col-span-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Endereço de Atendimento</label>
+            <input 
+              type="text" 
+              name="address"
+              className="px-5 py-4 rounded-2xl border-2 border-slate-100 focus:border-orange-500 outline-none text-sm font-medium bg-slate-50 focus:bg-white transition-all"
+              value={companyInfo.address}
+              onChange={handleCompanyChange}
+            />
+          </div>
         </div>
       </div>
 
       <div className="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden p-10">
         <div className="mb-8">
           <h3 className="text-2xl font-black text-slate-900 mb-1 tracking-tighter uppercase">💳 Formas de Pagamento</h3>
+          <p className="text-sm text-slate-500 font-medium">As taxas cadastradas aqui são descontadas do seu lucro líquido.</p>
         </div>
 
         <form onSubmit={handleMethodSubmit} className="flex flex-col md:flex-row gap-3 mb-10">
@@ -200,15 +193,23 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             value={newMethodName}
             onChange={(e) => setNewMethodName(e.target.value)}
           />
-          <input 
-            type="number" 
-            step="0.01"
-            placeholder="Taxa %"
-            className="w-full md:w-32 px-5 py-4 rounded-2xl border-2 border-slate-100 focus:border-orange-500 outline-none text-sm font-black bg-slate-50"
-            value={newMethodFee}
-            onChange={(e) => setNewMethodFee(parseFloat(e.target.value) || 0)}
-          />
-          <button type="submit" className="px-10 py-4 bg-slate-900 text-white font-black rounded-2xl hover:bg-black transition-all">ADICIONAR</button>
+          <div className="relative w-full md:w-40">
+            <input 
+              type="number" 
+              step="0.01"
+              placeholder="Taxa %"
+              className="w-full px-5 py-4 pr-10 rounded-2xl border-2 border-slate-100 focus:border-orange-500 outline-none text-sm font-black bg-slate-50 focus:bg-white transition-all"
+              value={newMethodFee}
+              onChange={(e) => setNewMethodFee(parseFloat(e.target.value) || 0)}
+            />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</span>
+          </div>
+          <button 
+            type="submit"
+            className="px-10 py-4 bg-slate-900 text-white font-black rounded-2xl hover:bg-black transition-all shadow-xl active:scale-95"
+          >
+            ADICIONAR
+          </button>
         </form>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -219,11 +220,11 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                 <div className="flex flex-col">
                   <span className="font-black text-slate-800 text-sm uppercase">{method.name}</span>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[9px] font-black text-slate-400">Taxa:</span>
+                    <span className="text-[9px] font-black text-slate-400 uppercase">Taxa Adm:</span>
                     <input 
                       type="number"
                       step="0.1"
-                      className="w-16 bg-white border rounded px-2 py-0.5 text-xs font-black text-orange-600"
+                      className="w-16 bg-white border-2 border-slate-200 rounded-lg px-2 py-0.5 text-xs font-black text-orange-600 focus:border-orange-500 outline-none"
                       value={method.feePercent}
                       onChange={(e) => onUpdateMethodFee(method.id, parseFloat(e.target.value) || 0)}
                     />
@@ -231,7 +232,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                   </div>
                 </div>
               </div>
-              <button onClick={() => onRemoveMethod(method.id)} className="p-3 text-slate-300 hover:text-red-500">🗑️</button>
+              <button 
+                onClick={() => onRemoveMethod(method.id)}
+                className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+              >
+                🗑️
+              </button>
             </div>
           ))}
         </div>
