@@ -19,7 +19,6 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [payments, setPayments] = useState<{ methodId: string, amount: number }[]>([]);
-  const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
   const [bulkModalProduct, setBulkModalProduct] = useState<Product | null>(null);
   const [bulkValue, setBulkValue] = useState<string>('');
   const scannerRef = useRef<HTMLInputElement>(null);
@@ -67,16 +66,6 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
 
   const removeFromCart = (id: string) => setCart(prev => prev.filter(item => item.id !== id));
   
-  const updateQuantity = (id: string, delta: number) => {
-    setCart(prev => prev.map(item => {
-      if (item.id === id) {
-        const step = item.unitType === 'kg' ? 0.1 : 1;
-        return { ...item, quantity: Math.max(0.001, item.quantity + (delta * step)) };
-      }
-      return item;
-    }));
-  };
-
   const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const paidAmount = payments.reduce((sum, p) => sum + p.amount, 0);
   const changeAmount = Math.max(0, paidAmount - total);

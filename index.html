@@ -8,10 +8,10 @@
     <script type="importmap">
 {
   "imports": {
-    "react": "https://esm.sh/react@19.0.0",
-    "react-dom": "https://esm.sh/react-dom@19.0.0",
-    "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
-    "recharts": "https://esm.sh/recharts@2.15.0",
+    "react": "https://esm.sh/react@18.3.1",
+    "react-dom": "https://esm.sh/react-dom@18.3.1",
+    "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
+    "recharts": "https://esm.sh/recharts@2.12.7",
     "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
     "react/": "https://esm.sh/react@^19.2.4/"
   }
@@ -50,6 +50,13 @@
         50% { opacity: 0.5; }
       }
     </style>
+    <script>
+      // Diagnostic tool
+      window.onerror = function(msg, url, lineNo, columnNo, error) {
+        console.error('Erro Crítico detectado:', msg, 'em', url, 'linha:', lineNo);
+        return false;
+      };
+    </script>
   </head>
   <body>
     <div id="root"></div>
