@@ -29,6 +29,7 @@ const DEFAULT_COMPANY: CompanyInfo = {
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
   
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
@@ -39,6 +40,18 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>('pos');
   const [lastSale, setLastSale] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
+
+  // Monitorar status da internet
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // Carregamento inicial do banco de dados local
   useEffect(() => {
@@ -113,14 +126,12 @@ const App: React.FC = () => {
 
     setProducts(prev => {
       const newProducts = [...prev];
-      // Devolve estoque antigo
       editingSale.items.forEach(oldItem => {
         const pIdx = newProducts.findIndex(p => p.id === oldItem.id);
         if (pIdx > -1 && newProducts[pIdx].category !== 'Serviços') {
           newProducts[pIdx].stock += oldItem.quantity;
         }
       });
-      // Retira estoque novo
       updatedSale.items.forEach(newItem => {
         const pIdx = newProducts.findIndex(p => p.id === newItem.id);
         if (pIdx > -1 && newProducts[pIdx].category !== 'Serviços') {
@@ -133,14 +144,13 @@ const App: React.FC = () => {
     setSales(prev => prev.map(s => s.id === editingSale.id ? updatedSale : s));
     setEditingSale(null);
     setCurrentView('sales');
-    alert('Venda atualizada com sucesso no banco local!');
   };
 
   const handleDeleteSale = (saleId: string) => {
     const saleToDelete = sales.find(s => s.id === saleId);
     if (!saleToDelete) return;
 
-    if (window.confirm(`⚠️ EXCLUIR DEFINITIVAMENTE: A venda #${saleId} será apagada e o estoque será devolvido. Prosseguir?`)) {
+    if (window.confirm(`⚠️ EXCLUIR DEFINITIVAMENTE: A venda #${saleId} será apagada e o estoque será devolvido.`)) {
       setProducts(prev => {
         const newProducts = [...prev];
         saleToDelete.items.forEach(item => {
@@ -151,11 +161,9 @@ const App: React.FC = () => {
         });
         return newProducts;
       });
-
       setSales(prev => prev.filter(s => s.id !== saleId));
       setEditingSale(null);
       setCurrentView('sales');
-      alert('Venda cancelada e dados locais atualizados.');
     }
   };
 
@@ -274,7 +282,15 @@ const App: React.FC = () => {
         <header className="flex justify-between items-center mb-8 print:hidden">
           <div>
             <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">{getViewTitle()}</h2>
-            <p className="text-slate-500 mt-1 font-bold">{companyInfo.name} — <span className="text-green-600">Conectado Localmente</span></p>
+            <div className="flex items-center gap-3 mt-1 font-bold">
+               <p className="text-slate-500">{companyInfo.name}</p>
+               <span className="text-slate-300">|</span>
+               {isOnline ? (
+                 <span className="text-green-600 flex items-center gap-1 text-xs">● Online</span>
+               ) : (
+                 <span className="text-orange-600 flex items-center gap-1 text-xs">▲ Modo Offline Ativo</span>
+               )}
+            </div>
           </div>
           <div className="flex items-center gap-4">
             <img className="h-10 w-10 rounded-full border-2 border-orange-500" src={`https://ui-avatars.com/api/?name=${currentUser}&background=f97316&color=fff`} alt="User" />
