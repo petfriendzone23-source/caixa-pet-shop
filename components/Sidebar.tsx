@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View } from '../types.ts';
 
 interface SidebarProps {
@@ -9,6 +9,26 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout }) => {
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
+
   const menuItems: { id: View; label: string; icon: string }[] = [
     { id: 'pos', label: 'Venda (PDV)', icon: '🛒' },
     { id: 'sales', label: 'Histórico', icon: '📜' },
@@ -26,9 +46,10 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout }) => 
         </h1>
         <div className="mt-2 flex items-center gap-2">
           <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Banco de Dados Local</span>
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Sistema Ativo</span>
         </div>
       </div>
+      
       <nav className="flex-1 mt-4 px-4 space-y-1">
         {menuItems.map((item) => (
           <button
@@ -45,14 +66,21 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout }) => 
           </button>
         ))}
       </nav>
-      <div className="p-4 border-t border-slate-800">
-        <div className="mb-4 px-4">
-           <p className="text-[9px] text-slate-500 font-bold uppercase">Armazenamento Local</p>
-           <div className="w-full bg-slate-800 h-1.5 rounded-full mt-1 overflow-hidden">
-              <div className="bg-orange-600 h-full w-[15%]"></div>
-           </div>
-        </div>
-        <button onClick={() => window.confirm('Sair do sistema?') && onLogout()} className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-red-400 hover:bg-red-500/10 font-bold uppercase text-xs">
+
+      <div className="p-4 border-t border-slate-800 space-y-2">
+        {deferredPrompt && (
+          <button 
+            onClick={handleInstallClick}
+            className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase text-[10px] tracking-widest transition-all shadow-lg animate-bounce"
+          >
+            💻 Instalar no PC
+          </button>
+        )}
+        
+        <button 
+          onClick={() => window.confirm('Sair do sistema?') && onLogout()} 
+          className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-red-400 hover:bg-red-500/10 font-bold uppercase text-xs"
+        >
           <span>🚪</span> Sair
         </button>
       </div>
