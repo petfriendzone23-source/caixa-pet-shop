@@ -24,6 +24,10 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout }) => 
         <h1 className="text-2xl font-black tracking-tighter flex items-center gap-3">
           <span className="bg-orange-600 p-2 rounded-xl">🐾</span> NexusPet
         </h1>
+        <div className="mt-2 flex items-center gap-2">
+          <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Banco de Dados Local</span>
+        </div>
       </div>
       <nav className="flex-1 mt-4 px-4 space-y-1">
         {menuItems.map((item) => (
@@ -41,8 +45,14 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout }) => 
           </button>
         ))}
       </nav>
-      <div className="p-4">
-        <button onClick={() => window.confirm('Sair?') && onLogout()} className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-red-400 hover:bg-red-500/10 font-bold uppercase text-xs">
+      <div className="p-4 border-t border-slate-800">
+        <div className="mb-4 px-4">
+           <p className="text-[9px] text-slate-500 font-bold uppercase">Armazenamento Local</p>
+           <div className="w-full bg-slate-800 h-1.5 rounded-full mt-1 overflow-hidden">
+              <div className="bg-orange-600 h-full w-[15%]"></div>
+           </div>
+        </div>
+        <button onClick={() => window.confirm('Sair do sistema?') && onLogout()} className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-red-400 hover:bg-red-500/10 font-bold uppercase text-xs">
           <span>🚪</span> Sair
         </button>
       </div>

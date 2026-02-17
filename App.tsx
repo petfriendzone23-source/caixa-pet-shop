@@ -40,6 +40,7 @@ const App: React.FC = () => {
   const [lastSale, setLastSale] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
 
+  // Carregamento inicial do banco de dados local
   useEffect(() => {
     const session = localStorage.getItem('nxpet_session');
     if (session) {
@@ -68,6 +69,7 @@ const App: React.FC = () => {
     }
   }, []);
 
+  // Sincronização automática para o disco rígido (via LocalStorage)
   useEffect(() => {
     if (isAuthenticated) {
       localStorage.setItem('nxpet_products', JSON.stringify(products));
@@ -111,12 +113,14 @@ const App: React.FC = () => {
 
     setProducts(prev => {
       const newProducts = [...prev];
+      // Devolve estoque antigo
       editingSale.items.forEach(oldItem => {
         const pIdx = newProducts.findIndex(p => p.id === oldItem.id);
         if (pIdx > -1 && newProducts[pIdx].category !== 'Serviços') {
           newProducts[pIdx].stock += oldItem.quantity;
         }
       });
+      // Retira estoque novo
       updatedSale.items.forEach(newItem => {
         const pIdx = newProducts.findIndex(p => p.id === newItem.id);
         if (pIdx > -1 && newProducts[pIdx].category !== 'Serviços') {
@@ -129,14 +133,14 @@ const App: React.FC = () => {
     setSales(prev => prev.map(s => s.id === editingSale.id ? updatedSale : s));
     setEditingSale(null);
     setCurrentView('sales');
-    alert('Venda atualizada com sucesso!');
+    alert('Venda atualizada com sucesso no banco local!');
   };
 
   const handleDeleteSale = (saleId: string) => {
     const saleToDelete = sales.find(s => s.id === saleId);
     if (!saleToDelete) return;
 
-    if (window.confirm(`⚠️ ATENÇÃO: Deseja realmente CANCELAR PERMANENTEMENTE a venda #${saleId}? O estoque dos itens será devolvido automaticamente.`)) {
+    if (window.confirm(`⚠️ EXCLUIR DEFINITIVAMENTE: A venda #${saleId} será apagada e o estoque será devolvido. Prosseguir?`)) {
       setProducts(prev => {
         const newProducts = [...prev];
         saleToDelete.items.forEach(item => {
@@ -151,7 +155,7 @@ const App: React.FC = () => {
       setSales(prev => prev.filter(s => s.id !== saleId));
       setEditingSale(null);
       setCurrentView('sales');
-      alert('Venda cancelada e estoque estornado com sucesso.');
+      alert('Venda cancelada e dados locais atualizados.');
     }
   };
 
@@ -270,7 +274,7 @@ const App: React.FC = () => {
         <header className="flex justify-between items-center mb-8 print:hidden">
           <div>
             <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">{getViewTitle()}</h2>
-            <p className="text-slate-500 mt-1">{companyInfo.name}</p>
+            <p className="text-slate-500 mt-1 font-bold">{companyInfo.name} — <span className="text-green-600">Conectado Localmente</span></p>
           </div>
           <div className="flex items-center gap-4">
             <img className="h-10 w-10 rounded-full border-2 border-orange-500" src={`https://ui-avatars.com/api/?name=${currentUser}&background=f97316&color=fff`} alt="User" />

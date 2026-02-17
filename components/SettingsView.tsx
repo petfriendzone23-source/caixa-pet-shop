@@ -37,7 +37,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     onUpdateCompanyInfo({ ...companyInfo, [name]: value });
   };
 
-  // Funções de Backup
   const handleExportBackup = () => {
     const data = {
       products: JSON.parse(localStorage.getItem('nxpet_products') || '[]'),
@@ -45,7 +44,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
       customers: JSON.parse(localStorage.getItem('nxpet_customers') || '[]'),
       payments: JSON.parse(localStorage.getItem('nxpet_payments') || '[]'),
       company: JSON.parse(localStorage.getItem('nxpet_company') || '{}'),
-      users: JSON.parse(localStorage.getItem('nxpet_users') || '[]'), // Incluindo usuários no backup
+      users: JSON.parse(localStorage.getItem('nxpet_users') || '[]'),
       nextSaleNumber: localStorage.getItem('nxpet_next_sale_number') || '1',
       version: '1.5.0',
       exportDate: new Date().toISOString()
@@ -57,11 +56,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     const dateStr = new Date().toISOString().split('T')[0];
     
     link.href = url;
-    link.download = `nexuspet_backup_${dateStr}.json`;
+    link.download = `backup_nexuspet_${dateStr}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+    alert("Backup gerado e salvo na sua pasta de Downloads!");
   };
 
   const handleImportClick = () => {
@@ -79,48 +79,79 @@ const SettingsView: React.FC<SettingsViewProps> = ({
         const data = JSON.parse(content);
 
         if (!data.products || !data.sales) {
-          throw new Error("Arquivo de backup inválido.");
+          throw new Error("Arquivo inválido.");
         }
 
-        if (window.confirm("ATENÇÃO: Restaurar este backup irá SOBRESCREVER todos os dados atuais (incluindo usuários e senhas). Deseja continuar?")) {
+        if (window.confirm("⚠️ ATENÇÃO: Isso apagará os dados atuais e restaurará os do arquivo. Confirmar?")) {
           localStorage.setItem('nxpet_products', JSON.stringify(data.products));
           localStorage.setItem('nxpet_sales', JSON.stringify(data.sales));
           localStorage.setItem('nxpet_customers', JSON.stringify(data.customers || []));
           localStorage.setItem('nxpet_payments', JSON.stringify(data.payments || []));
           localStorage.setItem('nxpet_company', JSON.stringify(data.company || {}));
-          localStorage.setItem('nxpet_users', JSON.stringify(data.users || [])); // Restaurando usuários
+          localStorage.setItem('nxpet_users', JSON.stringify(data.users || []));
           localStorage.setItem('nxpet_next_sale_number', data.nextSaleNumber || '1');
           
-          // Limpa a sessão atual para forçar novo login com os dados restaurados
-          localStorage.removeItem('nxpet_session');
-          
-          alert("Backup restaurado com sucesso! O sistema será reiniciado para aplicar as credenciais.");
+          alert("Sistema restaurado com sucesso!");
           window.location.reload();
         }
       } catch (err) {
-        alert("Erro ao importar backup: Certifique-se de que o arquivo é um JSON válido do NexusPet.");
+        alert("Erro ao importar backup: Arquivo corrompido ou inválido.");
       }
     };
     reader.readAsText(file);
-    e.target.value = ''; // Limpa o input
+    e.target.value = '';
   };
 
   return (
-    <div className="max-w-3xl space-y-8 pb-12">
-      {/* Dados da Empresa */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden p-8">
-        <div className="mb-6">
-          <h3 className="text-xl font-black text-slate-800 mb-1">🏢 Dados da Empresa</h3>
-          <p className="text-sm text-slate-500">Estas informações aparecerão no topo de todos os recibos de venda.</p>
+    <div className="max-w-4xl space-y-8 pb-12">
+      <div className="bg-slate-900 rounded-[40px] border border-slate-800 shadow-2xl overflow-hidden p-10 text-white relative">
+        <div className="absolute top-0 right-0 p-12 opacity-10 text-9xl">💾</div>
+        <div className="mb-10 relative z-10">
+          <h3 className="text-3xl font-black mb-2 uppercase tracking-tighter">Backup Geral do Sistema</h3>
+          <p className="text-slate-400 font-medium">Salve todas as suas informações em um arquivo externo no seu computador.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+          <div className="p-8 bg-white/5 rounded-[32px] border border-white/10 backdrop-blur-sm group hover:bg-white/10 transition-all">
+            <div className="w-12 h-12 bg-orange-600 rounded-2xl flex items-center justify-center text-2xl mb-4">📥</div>
+            <h4 className="font-black text-xl mb-2">Exportar Dados</h4>
+            <p className="text-sm text-slate-400 mb-6">Gera um arquivo .JSON com tudo o que você cadastrou.</p>
+            <button 
+              onClick={handleExportBackup}
+              className="w-full py-4 bg-orange-600 hover:bg-orange-500 text-white rounded-2xl font-black text-sm transition-all shadow-xl shadow-orange-900/40 uppercase tracking-widest"
+            >
+              Salvar Backup no PC
+            </button>
+          </div>
+
+          <div className="p-8 bg-white/5 rounded-[32px] border border-white/10 backdrop-blur-sm group hover:bg-white/10 transition-all">
+            <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-2xl mb-4">📤</div>
+            <h4 className="font-black text-xl mb-2">Restaurar Dados</h4>
+            <p className="text-sm text-slate-400 mb-6">Recupera informações de um arquivo salvo anteriormente.</p>
+            <button 
+              onClick={handleImportClick}
+              className="w-full py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl font-black text-sm transition-all border border-slate-700 uppercase tracking-widest"
+            >
+              Abrir Arquivo de Backup
+            </button>
+            <input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={handleFileImport} />
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden p-10">
+        <div className="mb-8">
+          <h3 className="text-2xl font-black text-slate-900 mb-1 tracking-tighter uppercase">🏢 Dados da Empresa</h3>
+          <p className="text-sm text-slate-500 font-medium">Informações exibidas na notinha de venda.</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Nome da Empresa / Fantasia</label>
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Nome Fantasia</label>
             <input 
               type="text" 
               name="name"
-              className="px-4 py-3 rounded-2xl border-2 border-slate-100 focus:border-orange-500 outline-none text-sm font-bold"
+              className="px-5 py-4 rounded-2xl border-2 border-slate-100 focus:border-orange-500 outline-none text-sm font-bold bg-slate-50 focus:bg-white transition-all"
               value={companyInfo.name}
               onChange={handleCompanyChange}
             />
@@ -130,145 +161,85 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             <input 
               type="text" 
               name="document"
-              placeholder="00.000.000/0000-00"
-              className="px-4 py-3 rounded-2xl border-2 border-slate-100 focus:border-orange-500 outline-none text-sm font-bold"
+              className="px-5 py-4 rounded-2xl border-2 border-slate-100 focus:border-orange-500 outline-none text-sm font-bold bg-slate-50 focus:bg-white transition-all"
               value={companyInfo.document}
               onChange={handleCompanyChange}
             />
           </div>
           <div className="flex flex-col gap-1 md:col-span-2">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Endereço Completo</label>
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Endereço de Atendimento</label>
             <input 
               type="text" 
               name="address"
-              placeholder="Rua, Número, Bairro, Cidade - UF"
-              className="px-4 py-3 rounded-2xl border-2 border-slate-100 focus:border-orange-500 outline-none text-sm"
+              className="px-5 py-4 rounded-2xl border-2 border-slate-100 focus:border-orange-500 outline-none text-sm font-medium bg-slate-50 focus:bg-white transition-all"
               value={companyInfo.address}
               onChange={handleCompanyChange}
             />
           </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Telefone de Contato</label>
-            <input 
-              type="text" 
-              name="phone"
-              placeholder="(00) 00000-0000"
-              className="px-4 py-3 rounded-2xl border-2 border-slate-100 focus:border-orange-500 outline-none text-sm"
-              value={companyInfo.phone || ''}
-              onChange={handleCompanyChange}
-            />
-          </div>
         </div>
       </div>
 
-      {/* Backup e Restauração */}
-      <div className="bg-slate-900 rounded-3xl border border-slate-800 shadow-xl overflow-hidden p-8 text-white relative">
-        <div className="absolute top-0 right-0 p-8 opacity-10 text-6xl">💾</div>
+      <div className="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden p-10">
         <div className="mb-8">
-          <h3 className="text-xl font-black mb-1">Backup e Restauração</h3>
-          <p className="text-sm text-slate-400">Proteja seus dados exportando um arquivo de segurança externo (JSON).</p>
+          <h3 className="text-2xl font-black text-slate-900 mb-1 tracking-tighter uppercase">💳 Formas de Pagamento</h3>
+          <p className="text-sm text-slate-500 font-medium">As taxas cadastradas aqui são descontadas do seu lucro líquido.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-6 bg-slate-800/50 rounded-2xl border border-slate-700">
-            <h4 className="font-bold text-orange-500 mb-2">Exportar Dados</h4>
-            <p className="text-xs text-slate-400 mb-4">Cria um arquivo com produtos, vendas, clientes, usuários e configurações.</p>
-            <button 
-              onClick={handleExportBackup}
-              className="w-full py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-black text-sm transition-all shadow-lg shadow-orange-900/20"
-            >
-              BAIXAR BACKUP COMPLETO
-            </button>
-          </div>
-
-          <div className="p-6 bg-slate-800/50 rounded-2xl border border-slate-700">
-            <h4 className="font-bold text-blue-400 mb-2">Restaurar Sistema</h4>
-            <p className="text-xs text-slate-400 mb-4">Carrega os dados de um arquivo anterior. Cuidado: isto apaga os dados atuais e desloga o usuário.</p>
-            <button 
-              onClick={handleImportClick}
-              className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-black text-sm transition-all border border-slate-600"
-            >
-              IMPORTAR ARQUIVO JSON
-            </button>
-            <input 
-              type="file" 
-              ref={fileInputRef}
-              className="hidden" 
-              accept=".json"
-              onChange={handleFileImport}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Formas de Pagamento */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden p-8">
-        <div className="mb-8">
-          <h3 className="text-xl font-black text-slate-800 mb-1">💳 Formas de Pagamento e Taxas</h3>
-          <p className="text-sm text-slate-500">Gerencie como seus clientes podem pagar e as taxas administrativas.</p>
-        </div>
-
-        <form onSubmit={handleMethodSubmit} className="flex flex-col md:flex-row gap-3 mb-8">
+        <form onSubmit={handleMethodSubmit} className="flex flex-col md:flex-row gap-3 mb-10">
           <input 
             type="text" 
-            placeholder="Nome (ex: Cartão de Crédito)"
-            className="flex-1 px-4 py-3 rounded-2xl border-2 border-slate-100 focus:border-orange-500 outline-none text-sm"
+            placeholder="Nome (Ex: Cartão de Crédito)"
+            className="flex-1 px-5 py-4 rounded-2xl border-2 border-slate-100 focus:border-orange-500 outline-none text-sm font-bold bg-slate-50 focus:bg-white transition-all"
             value={newMethodName}
             onChange={(e) => setNewMethodName(e.target.value)}
           />
-          <div className="relative w-full md:w-32">
+          <div className="relative w-full md:w-40">
             <input 
               type="number" 
               step="0.01"
               placeholder="Taxa %"
-              className="w-full px-4 py-3 pr-8 rounded-2xl border-2 border-slate-100 focus:border-orange-500 outline-none text-sm font-bold"
+              className="w-full px-5 py-4 pr-10 rounded-2xl border-2 border-slate-100 focus:border-orange-500 outline-none text-sm font-black bg-slate-50 focus:bg-white transition-all"
               value={newMethodFee}
               onChange={(e) => setNewMethodFee(parseFloat(e.target.value) || 0)}
             />
-            <span className="absolute right-3 top-3 text-slate-400 font-bold">%</span>
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</span>
           </div>
           <button 
             type="submit"
-            className="px-6 py-3 bg-orange-600 text-white font-black rounded-2xl hover:bg-orange-700 transition-all shadow-lg shadow-orange-100 active:scale-95"
+            className="px-10 py-4 bg-slate-900 text-white font-black rounded-2xl hover:bg-black transition-all shadow-xl active:scale-95"
           >
-            Adicionar
+            ADICIONAR
           </button>
         </form>
 
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {paymentMethods.map(method => (
-            <div key={method.id} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100 group transition-all hover:bg-white hover:shadow-md">
-              <div className="flex items-center gap-4 flex-1">
-                <span className="text-2xl">{method.icon}</span>
+            <div key={method.id} className="flex items-center justify-between p-6 rounded-3xl bg-slate-50 border border-slate-100 group transition-all hover:bg-white hover:shadow-xl hover:border-orange-100">
+              <div className="flex items-center gap-4">
+                <span className="text-3xl">{method.icon}</span>
                 <div className="flex flex-col">
-                  <span className="font-bold text-slate-700">{method.name}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black text-slate-400 uppercase">Taxa Adm:</span>
+                  <span className="font-black text-slate-800 text-sm uppercase">{method.name}</span>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[9px] font-black text-slate-400 uppercase">Taxa Adm:</span>
                     <input 
                       type="number"
                       step="0.1"
-                      className="w-16 bg-white border border-slate-200 rounded px-1 py-0.5 text-[11px] font-black text-orange-600 focus:ring-1 focus:ring-orange-500 outline-none"
+                      className="w-16 bg-white border-2 border-slate-200 rounded-lg px-2 py-0.5 text-xs font-black text-orange-600 focus:border-orange-500 outline-none"
                       value={method.feePercent}
                       onChange={(e) => onUpdateMethodFee(method.id, parseFloat(e.target.value) || 0)}
                     />
-                    <span className="text-[10px] font-bold text-slate-400">%</span>
+                    <span className="text-xs font-bold text-slate-400">%</span>
                   </div>
                 </div>
               </div>
               <button 
                 onClick={() => onRemoveMethod(method.id)}
-                className="p-2 text-slate-300 hover:text-red-500 transition-all"
+                className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
               >
                 🗑️
               </button>
             </div>
           ))}
-          
-          {paymentMethods.length === 0 && (
-            <div className="text-center py-12 text-slate-400 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
-              Nenhuma forma de pagamento cadastrada.
-            </div>
-          )}
         </div>
       </div>
     </div>
