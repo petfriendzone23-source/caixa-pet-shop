@@ -1,51 +1,34 @@
 
-const CACHE_NAME = 'nexuspet-v1.9.0-offline-full';
+const CACHE_NAME = 'nexuspet-v2.0.0';
 
-// Lista exaustiva de recursos necessários para o boot sem internet
-const ASSETS_TO_CACHE = [
+// Recursos vitais para o primeiro carregamento
+const PRECACHE_ASSETS = [
   '/',
   '/index.html',
   '/index.tsx',
   '/App.tsx',
-  '/types.ts',
-  '/constants.ts',
   '/manifest.json',
-  '/components/Sidebar.tsx',
-  '/components/POSView.tsx',
-  '/components/InventoryView.tsx',
-  '/components/DashboardView.tsx',
-  '/components/SettingsView.tsx',
-  '/components/CustomerView.tsx',
-  '/components/SalesHistoryView.tsx',
-  '/components/ReceiptModal.tsx',
-  '/components/LoginView.tsx',
-  // Dependências críticas externas
+  '/constants.ts',
+  '/types.ts',
   'https://cdn.tailwindcss.com',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Libre+Barcode+128&family=Inconsolata:wght@400;700&display=swap',
   'https://esm.sh/react@18.3.1',
   'https://esm.sh/react-dom@18.3.1',
   'https://esm.sh/react-dom@18.3.1/client',
-  'https://esm.sh/react@18.3.1/jsx-runtime',
-  'https://esm.sh/recharts@2.12.7?external=react,react-dom'
+  'https://esm.sh/react@18.3.1/jsx-runtime'
 ];
 
-// Instalação: Salva TUDO no disco rígido imediatamente
+// Instalação
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('NexusPet: Gerando cache offline completo...');
-      // Usamos addAll mas com um map para logar erros se algum arquivo falhar
-      return Promise.all(
-        ASSETS_TO_CACHE.map(url => {
-          return cache.add(url).catch(err => console.error('Falha ao cachear:', url, err));
-        })
-      );
+      console.log('NexusPet: Fazendo download do sistema para o disco...');
+      return cache.addAll(PRECACHE_ASSETS);
     })
   );
 });
 
-// Ativação: Limpa versões velhas e assume o controle
+// Ativação
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -57,33 +40,42 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Estratégia: Cache First (Prioriza o disco, se não tiver, busca na rede e salva)
+// Interceptação de Requisições
 self.addEventListener('fetch', (event) => {
-  // Ignorar requisições que não sejam GET
-  if (event.request.method !== 'GET') return;
+  const { request } = event;
 
+  // 1. Lógica para NAVEGAÇÃO (Abrir o site/app)
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request).catch(() => {
+        return caches.match('/index.html') || caches.match('/');
+      })
+    );
+    return;
+  }
+
+  // 2. Lógica para RECURSOS (JS, Módulos, CSS, Fontes)
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      // 1. Se está no cache, retorna imediatamente (Velocidade máxima)
+    caches.match(request).then((cachedResponse) => {
+      // Se já temos no cache, entrega ele (Instantâneo)
       if (cachedResponse) {
         return cachedResponse;
       }
 
-      // 2. Se não está no cache, tenta buscar na rede
-      return fetch(event.request).then((networkResponse) => {
-        // Se a resposta for válida, salva no cache para a próxima vez
-        if (networkResponse && networkResponse.status === 200) {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
+      // Se não temos, busca na rede e salva no cache para a próxima vez
+      return fetch(request).then((networkResponse) => {
+        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic' && !request.url.includes('esm.sh') && !request.url.includes('cdn')) {
+          return networkResponse;
         }
+
+        const responseToCache = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(request, responseToCache);
+        });
+
         return networkResponse;
       }).catch(() => {
-        // 3. Se falhar a rede (Offline total) e for uma navegação, retorna o index.html
-        if (event.request.mode === 'navigate') {
-          return caches.match('/index.html');
-        }
+        // Se a rede falhar e não tivermos cache, apenas falha (ou retorna um fallback se for imagem)
         return null;
       });
     })

@@ -30,6 +30,7 @@ const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
+  const [swStatus, setSwStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
@@ -41,12 +42,19 @@ const App: React.FC = () => {
   const [lastSale, setLastSale] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
 
-  // Monitorar status da internet
+  // Monitorar status da internet e do Service Worker
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(() => setSwStatus('ready'));
+    } else {
+      setSwStatus('ready'); // Fallback para navegadores sem SW (não funcionará offline)
+    }
+
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
@@ -123,7 +131,6 @@ const App: React.FC = () => {
 
   const handleUpdateSale = (updatedSale: Sale) => {
     if (!editingSale) return;
-
     setProducts(prev => {
       const newProducts = [...prev];
       editingSale.items.forEach(oldItem => {
@@ -140,7 +147,6 @@ const App: React.FC = () => {
       });
       return newProducts;
     });
-
     setSales(prev => prev.map(s => s.id === editingSale.id ? updatedSale : s));
     setEditingSale(null);
     setCurrentView('sales');
@@ -149,7 +155,6 @@ const App: React.FC = () => {
   const handleDeleteSale = (saleId: string) => {
     const saleToDelete = sales.find(s => s.id === saleId);
     if (!saleToDelete) return;
-
     if (window.confirm(`⚠️ EXCLUIR DEFINITIVAMENTE: A venda #${saleId} será apagada e o estoque será devolvido.`)) {
       setProducts(prev => {
         const newProducts = [...prev];
@@ -237,18 +242,7 @@ const App: React.FC = () => {
   const renderView = () => {
     switch (currentView) {
       case 'pos':
-        return (
-          <POSView 
-            products={products} 
-            paymentMethods={paymentMethods} 
-            customers={customers} 
-            nextSaleNumber={nextSaleNumber} 
-            onCompleteSale={editingSale ? handleUpdateSale : handleCompleteSale}
-            editingSale={editingSale}
-            onCancelEdit={() => { setEditingSale(null); setCurrentView('sales'); }}
-            onDeleteSale={handleDeleteSale}
-          />
-        );
+        return <POSView products={products} paymentMethods={paymentMethods} customers={customers} nextSaleNumber={nextSaleNumber} onCompleteSale={editingSale ? handleUpdateSale : handleCompleteSale} editingSale={editingSale} onCancelEdit={() => { setEditingSale(null); setCurrentView('sales'); }} onDeleteSale={handleDeleteSale} />;
       case 'sales':
         return <SalesHistoryView sales={sales} onOpenReceipt={(sale) => setLastSale(sale)} onEditSale={handleStartEditSale} />;
       case 'inventory':
@@ -279,6 +273,32 @@ const App: React.FC = () => {
     <div className="flex min-h-screen bg-slate-50">
       <Sidebar currentView={currentView} setView={(v) => { setEditingSale(null); setCurrentView(v); }} onLogout={handleLogout} />
       <main className="flex-1 flex flex-col p-8 print:p-0">
+        
+        {/* Banner de Sincronização */}
+        {!isOnline && (
+          <div className="mb-6 bg-orange-600 text-white px-6 py-3 rounded-2xl flex items-center justify-between shadow-lg animate-pulse">
+            <div className="flex items-center gap-3">
+              <span className="text-xl">⚠️</span>
+              <div>
+                <p className="font-black text-sm uppercase tracking-widest">Modo Offline Ativado</p>
+                <p className="text-[10px] font-bold opacity-80">Você pode continuar vendendo. Os dados serão salvos no computador.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isOnline && swStatus === 'loading' && (
+          <div className="mb-6 bg-blue-600 text-white px-6 py-3 rounded-2xl flex items-center justify-between shadow-lg">
+            <div className="flex items-center gap-3">
+              <span className="text-xl">⏳</span>
+              <div>
+                <p className="font-black text-sm uppercase tracking-widest">Preparando Modo Offline</p>
+                <p className="text-[10px] font-bold opacity-80">Baixando arquivos necessários. Por favor, não feche agora...</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <header className="flex justify-between items-center mb-8 print:hidden">
           <div>
             <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">{getViewTitle()}</h2>
@@ -286,9 +306,9 @@ const App: React.FC = () => {
                <p className="text-slate-500">{companyInfo.name}</p>
                <span className="text-slate-300">|</span>
                {isOnline ? (
-                 <span className="text-green-600 flex items-center gap-1 text-xs">● Online</span>
+                 <span className="text-green-600 flex items-center gap-1 text-[10px] font-black uppercase tracking-widest">● Conectado</span>
                ) : (
-                 <span className="text-orange-600 flex items-center gap-1 text-xs">▲ Modo Offline Ativo</span>
+                 <span className="text-orange-600 flex items-center gap-1 text-[10px] font-black uppercase tracking-widest">▲ Local</span>
                )}
             </div>
           </div>
@@ -296,7 +316,7 @@ const App: React.FC = () => {
             <img className="h-10 w-10 rounded-full border-2 border-orange-500" src={`https://ui-avatars.com/api/?name=${currentUser}&background=f97316&color=fff`} alt="User" />
             <div className="text-right">
               <p className="text-sm font-bold text-slate-800">{currentUser}</p>
-              <p className="text-xs text-slate-500">Operador</p>
+              <p className="text-xs text-slate-500 uppercase font-black text-[9px] tracking-widest">Administrador</p>
             </div>
           </div>
         </header>
