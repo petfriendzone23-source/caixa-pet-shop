@@ -54,11 +54,13 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Carregamento explícito do ponto de entrada do sistema -->
+    <script type="module" src="index.tsx"></script>
     <script>
-      // Diagnóstico básico para o console
+      // Captura erros de carregamento de módulo para diagnóstico
       window.addEventListener('error', function(e) {
         if (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK') {
-          console.error('Falha ao carregar recurso crítico:', e.target.src || e.target.href);
+          console.error('Erro ao carregar recurso:', e.target.src || e.target.href);
         }
       }, true);
     </script>
