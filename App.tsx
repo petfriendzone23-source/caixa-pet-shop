@@ -40,47 +40,47 @@ const App: React.FC = () => {
   const [lastSale, setLastSale] = useState<Sale | null>(null);
 
   useEffect(() => {
-    // Verificar sessão ativa
+    // Verificar sessão ativa de forma segura
     const session = localStorage.getItem('nxpet_session');
     if (session) {
       setIsAuthenticated(true);
       setCurrentUser(session);
     }
 
-    const savedProducts = localStorage.getItem('nxpet_products');
-    const savedSales = localStorage.getItem('nxpet_sales');
-    const savedPayments = localStorage.getItem('nxpet_payments');
-    const savedCustomers = localStorage.getItem('nxpet_customers');
+    const loadFromStorage = (key: string, defaultValue: any) => {
+      try {
+        const item = localStorage.getItem(key);
+        return item ? JSON.parse(item) : defaultValue;
+      } catch (e) {
+        console.error(`Erro ao carregar ${key}:`, e);
+        return defaultValue;
+      }
+    };
+
+    setProducts(loadFromStorage('nxpet_products', INITIAL_PRODUCTS));
+    setSales(loadFromStorage('nxpet_sales', []));
+    setPaymentMethods(loadFromStorage('nxpet_payments', DEFAULT_PAYMENTS));
+    setCustomers(loadFromStorage('nxpet_customers', []));
+    setCompanyInfo(loadFromStorage('nxpet_company', DEFAULT_COMPANY));
+
     const savedNextNumber = localStorage.getItem('nxpet_next_sale_number');
-    const savedCompany = localStorage.getItem('nxpet_company');
-    
-    if (savedProducts) setProducts(JSON.parse(savedProducts));
-    else setProducts(INITIAL_PRODUCTS);
-
-    if (savedSales) {
-      setSales(JSON.parse(savedSales));
-    }
-    
-    if (savedPayments) setPaymentMethods(JSON.parse(savedPayments));
-    else setPaymentMethods(DEFAULT_PAYMENTS);
-
-    if (savedCustomers) setCustomers(JSON.parse(savedCustomers));
-
-    if (savedCompany) setCompanyInfo(JSON.parse(savedCompany));
-
     if (savedNextNumber) {
-      setNextSaleNumber(parseInt(savedNextNumber));
+      setNextSaleNumber(parseInt(savedNextNumber) || 1);
     }
   }, []);
 
   useEffect(() => {
     if (isAuthenticated) {
-      localStorage.setItem('nxpet_products', JSON.stringify(products));
-      localStorage.setItem('nxpet_sales', JSON.stringify(sales));
-      localStorage.setItem('nxpet_payments', JSON.stringify(paymentMethods));
-      localStorage.setItem('nxpet_customers', JSON.stringify(customers));
-      localStorage.setItem('nxpet_company', JSON.stringify(companyInfo));
-      localStorage.setItem('nxpet_next_sale_number', nextSaleNumber.toString());
+      try {
+        localStorage.setItem('nxpet_products', JSON.stringify(products));
+        localStorage.setItem('nxpet_sales', JSON.stringify(sales));
+        localStorage.setItem('nxpet_payments', JSON.stringify(paymentMethods));
+        localStorage.setItem('nxpet_customers', JSON.stringify(customers));
+        localStorage.setItem('nxpet_company', JSON.stringify(companyInfo));
+        localStorage.setItem('nxpet_next_sale_number', nextSaleNumber.toString());
+      } catch (e) {
+        console.error("Erro ao salvar no localStorage:", e);
+      }
     }
   }, [products, sales, paymentMethods, customers, nextSaleNumber, companyInfo, isAuthenticated]);
 

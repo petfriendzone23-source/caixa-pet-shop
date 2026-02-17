@@ -13,9 +13,14 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const savedUsers = localStorage.getItem('nxpet_users');
-    if (!savedUsers) {
-      setIsRegistering(true);
+    try {
+      const savedUsers = localStorage.getItem('nxpet_users');
+      if (!savedUsers || savedUsers === '[]') {
+        setIsRegistering(true);
+      }
+    } catch (e) {
+      console.error("Erro ao verificar usuários:", e);
+      setIsRegistering(true); // Se houver erro, assume que precisa registrar
     }
   }, []);
 
@@ -33,26 +38,37 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
       return;
     }
 
-    const newUser = { username, password };
-    localStorage.setItem('nxpet_users', JSON.stringify([newUser]));
-    setIsRegistering(false);
-    alert('Usuário administrador criado com sucesso! Agora faça login.');
+    try {
+      const newUser = { username, password };
+      localStorage.setItem('nxpet_users', JSON.stringify([newUser]));
+      setIsRegistering(false);
+      alert('Usuário administrador criado com sucesso! Agora faça login.');
+    } catch (e) {
+      setError('Erro ao salvar usuário. Verifique se o navegador permite armazenamento local.');
+    }
   };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    const savedUsersStr = localStorage.getItem('nxpet_users');
-    if (!savedUsersStr) return;
+    try {
+      const savedUsersStr = localStorage.getItem('nxpet_users');
+      if (!savedUsersStr) {
+        setError('Nenhum usuário cadastrado.');
+        return;
+      }
 
-    const users = JSON.parse(savedUsersStr);
-    const user = users.find((u: any) => u.username === username && u.password === password);
+      const users = JSON.parse(savedUsersStr);
+      const user = users.find((u: any) => u.username === username && u.password === password);
 
-    if (user) {
-      onLogin(username);
-    } else {
-      setError('Usuário ou senha incorretos.');
+      if (user) {
+        onLogin(username);
+      } else {
+        setError('Usuário ou senha incorretos.');
+      }
+    } catch (e) {
+      setError('Erro interno ao processar login.');
     }
   };
 
