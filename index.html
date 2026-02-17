@@ -57,13 +57,14 @@
   </head>
   <body>
     <div id="root"></div>
-    <!-- Script Type Module é essencial para carregar o sistema -->
-    <script type="module" src="index.tsx"></script>
     <script>
       // Diagnóstico básico para o console
       window.addEventListener('error', function(e) {
         if (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK') {
-          console.error('Falha ao carregar recurso crítico:', e.target.src || e.target.href);
+          const src = e.target.src || e.target.href;
+          if (src && !src.includes('index.tsx')) { 
+            console.error('Falha ao carregar recurso crítico:', src);
+          }
         }
       }, true);
     </script>
