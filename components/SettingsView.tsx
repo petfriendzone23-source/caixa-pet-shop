@@ -45,6 +45,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
       customers: JSON.parse(localStorage.getItem('nxpet_customers') || '[]'),
       payments: JSON.parse(localStorage.getItem('nxpet_payments') || '[]'),
       company: JSON.parse(localStorage.getItem('nxpet_company') || '{}'),
+      users: JSON.parse(localStorage.getItem('nxpet_users') || '[]'), // Incluindo usuários no backup
       nextSaleNumber: localStorage.getItem('nxpet_next_sale_number') || '1',
       version: '1.5.0',
       exportDate: new Date().toISOString()
@@ -81,15 +82,19 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           throw new Error("Arquivo de backup inválido.");
         }
 
-        if (window.confirm("ATENÇÃO: Restaurar este backup irá SOBRESCREVER todos os dados atuais. Deseja continuar?")) {
+        if (window.confirm("ATENÇÃO: Restaurar este backup irá SOBRESCREVER todos os dados atuais (incluindo usuários e senhas). Deseja continuar?")) {
           localStorage.setItem('nxpet_products', JSON.stringify(data.products));
           localStorage.setItem('nxpet_sales', JSON.stringify(data.sales));
           localStorage.setItem('nxpet_customers', JSON.stringify(data.customers || []));
           localStorage.setItem('nxpet_payments', JSON.stringify(data.payments || []));
           localStorage.setItem('nxpet_company', JSON.stringify(data.company || {}));
+          localStorage.setItem('nxpet_users', JSON.stringify(data.users || [])); // Restaurando usuários
           localStorage.setItem('nxpet_next_sale_number', data.nextSaleNumber || '1');
           
-          alert("Backup restaurado com sucesso! O sistema será reiniciado.");
+          // Limpa a sessão atual para forçar novo login com os dados restaurados
+          localStorage.removeItem('nxpet_session');
+          
+          alert("Backup restaurado com sucesso! O sistema será reiniciado para aplicar as credenciais.");
           window.location.reload();
         }
       } catch (err) {
@@ -111,7 +116,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nome da Empresa / Fantasia</label>
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Nome da Empresa / Fantasia</label>
             <input 
               type="text" 
               name="name"
@@ -121,7 +126,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">CNPJ / CPF</label>
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">CNPJ / CPF</label>
             <input 
               type="text" 
               name="document"
@@ -132,7 +137,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             />
           </div>
           <div className="flex flex-col gap-1 md:col-span-2">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Endereço Completo</label>
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Endereço Completo</label>
             <input 
               type="text" 
               name="address"
@@ -143,7 +148,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Telefone de Contato</label>
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Telefone de Contato</label>
             <input 
               type="text" 
               name="phone"
@@ -161,29 +166,29 @@ const SettingsView: React.FC<SettingsViewProps> = ({
         <div className="absolute top-0 right-0 p-8 opacity-10 text-6xl">💾</div>
         <div className="mb-8">
           <h3 className="text-xl font-black mb-1">Backup e Restauração</h3>
-          <p className="text-sm text-slate-400">Proteja seus dados exportando um arquivo de segurança externo.</p>
+          <p className="text-sm text-slate-400">Proteja seus dados exportando um arquivo de segurança externo (JSON).</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="p-6 bg-slate-800/50 rounded-2xl border border-slate-700">
             <h4 className="font-bold text-orange-500 mb-2">Exportar Dados</h4>
-            <p className="text-xs text-slate-400 mb-4">Cria um arquivo .json com todos os produtos, vendas, clientes e configurações.</p>
+            <p className="text-xs text-slate-400 mb-4">Cria um arquivo com produtos, vendas, clientes, usuários e configurações.</p>
             <button 
               onClick={handleExportBackup}
               className="w-full py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-black text-sm transition-all shadow-lg shadow-orange-900/20"
             >
-              BAIXAR ARQUIVO DE BACKUP
+              BAIXAR BACKUP COMPLETO
             </button>
           </div>
 
           <div className="p-6 bg-slate-800/50 rounded-2xl border border-slate-700">
             <h4 className="font-bold text-blue-400 mb-2">Restaurar Sistema</h4>
-            <p className="text-xs text-slate-400 mb-4">Carrega os dados de um arquivo de backup anterior. Cuidado: isto apaga os dados atuais.</p>
+            <p className="text-xs text-slate-400 mb-4">Carrega os dados de um arquivo anterior. Cuidado: isto apaga os dados atuais e desloga o usuário.</p>
             <button 
               onClick={handleImportClick}
               className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-black text-sm transition-all border border-slate-600"
             >
-              SELECIONAR ARQUIVO PARA RESTAURAR
+              IMPORTAR ARQUIVO JSON
             </button>
             <input 
               type="file" 
