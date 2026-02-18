@@ -30,6 +30,7 @@ const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => localStorage.getItem('nxpet_dark_mode') === 'true');
   
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
@@ -40,6 +41,16 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>('pos');
   const [lastSale, setLastSale] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
+
+  // Sincroniza a classe 'dark' no elemento <html> (necessário para Tailwind darkMode: 'class')
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('nxpet_dark_mode', isDarkMode.toString());
+  }, [isDarkMode]);
 
   useEffect(() => {
     const handleStatus = () => setIsOnline(navigator.onLine);
@@ -103,7 +114,7 @@ const App: React.FC = () => {
       case 'inventory': return <InventoryView products={products} onUpdateStock={(id, s) => setProducts(products.map(p => p.id === id ? {...p, stock: s} : p))} onSaveProduct={(p) => setProducts(products.find(x => x.id === p.id) ? products.map(x => x.id === p.id ? p : x) : [p, ...products])} onDeleteProduct={(id) => setProducts(products.filter(p => p.id !== id))} />;
       case 'customers': return <CustomerView customers={customers} onSaveCustomer={(c) => setCustomers(customers.find(x => x.id === c.id) ? customers.map(x => x.id === c.id ? c : x) : [c, ...customers])} onDeleteCustomer={(id) => setCustomers(customers.filter(c => c.id !== id))} />;
       case 'dashboard': return <DashboardView sales={sales} />;
-      case 'settings': return <SettingsView paymentMethods={paymentMethods} companyInfo={companyInfo} onAddMethod={(n, f) => setPaymentMethods([...paymentMethods, {id: Math.random().toString(), name: n, feePercent: f, icon: '💰'}])} onRemoveMethod={(id) => setPaymentMethods(paymentMethods.filter(p => p.id !== id))} onUpdateMethodFee={(id, f) => setPaymentMethods(paymentMethods.map(p => p.id === id ? {...p, feePercent: f} : p))} onUpdateCompanyInfo={setCompanyInfo} />;
+      case 'settings': return <SettingsView paymentMethods={paymentMethods} companyInfo={companyInfo} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} onAddMethod={(n, f) => setPaymentMethods([...paymentMethods, {id: Math.random().toString(), name: n, feePercent: f, icon: '💰'}])} onRemoveMethod={(id) => setPaymentMethods(paymentMethods.filter(p => p.id !== id))} onUpdateMethodFee={(id, f) => setPaymentMethods(paymentMethods.map(p => p.id === id ? {...p, feePercent: f} : p))} onUpdateCompanyInfo={setCompanyInfo} />;
       default: return null;
     }
   };
@@ -111,23 +122,23 @@ const App: React.FC = () => {
   if (!isAuthenticated) return <LoginView onLogin={handleLogin} />;
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors duration-500">
       <Sidebar currentView={currentView} setView={setCurrentView} onLogout={handleLogout} />
       <main className="flex-1 flex flex-col min-w-0">
         <header className="flex justify-between items-center p-8 pb-4 print:hidden">
           <div>
-            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight uppercase">
+            <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight uppercase">
               {currentView === 'pos' ? 'PDV' : currentView === 'sales' ? 'Histórico' : currentView === 'inventory' ? 'Estoque' : currentView === 'customers' ? 'Clientes' : currentView === 'dashboard' ? 'Relatórios' : 'Configurações'}
             </h2>
             <div className="flex items-center gap-2 mt-1">
               <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-orange-500'}`}></span>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{isOnline ? 'Online' : 'Modo Offline'}</p>
+              <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{isOnline ? 'Online' : 'Modo Offline'}</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <p className="text-sm font-bold text-slate-800">{currentUser}</p>
-              <p className="text-[9px] text-slate-500 font-black uppercase">Admin</p>
+              <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{currentUser}</p>
+              <p className="text-[9px] text-slate-500 font-black uppercase tracking-tighter">Administrador</p>
             </div>
             <div className="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
               {currentUser?.charAt(0).toUpperCase()}
@@ -135,7 +146,6 @@ const App: React.FC = () => {
           </div>
         </header>
         
-        {/* ÁREA COM ROLAGEM HABILITADA - RESOLVE O PROBLEMA DE TRAVAMENTO */}
         <section className="flex-1 overflow-y-auto px-8 pb-8 custom-scrollbar print:overflow-visible">
           {renderView()}
         </section>

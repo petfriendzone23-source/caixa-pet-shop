@@ -39,10 +39,10 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout }) => 
   ];
 
   return (
-    <aside className="w-64 bg-slate-900 text-white h-screen flex flex-col sticky top-0 print:hidden shadow-2xl">
+    <aside className="w-64 bg-slate-900 dark:bg-black text-white h-screen flex flex-col sticky top-0 print:hidden shadow-2xl transition-colors duration-500">
       <div className="p-8">
         <h1 className="text-2xl font-black tracking-tighter flex items-center gap-3">
-          <span className="bg-orange-600 p-2 rounded-xl">🐾</span> NexusPet
+          <span className="bg-orange-600 p-2 rounded-xl shadow-lg shadow-orange-900/20">🐾</span> NexusPet
         </h1>
         <div className="mt-2 flex items-center gap-2">
           <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
@@ -55,10 +55,10 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout }) => 
           <button
             key={item.id}
             onClick={() => setView(item.id)}
-            className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all ${
+            className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 ${
               currentView === item.id 
-                ? 'bg-orange-600 text-white' 
-                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                ? 'bg-orange-600 text-white shadow-lg shadow-orange-900/30' 
+                : 'text-slate-400 hover:bg-slate-800 dark:hover:bg-slate-900 hover:text-white'
             }`}
           >
             <span className="text-xl">{item.icon}</span>
@@ -67,19 +67,19 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout }) => 
         ))}
       </nav>
 
-      <div className="p-4 border-t border-slate-800 space-y-2">
+      <div className="p-4 border-t border-slate-800 dark:border-slate-900 space-y-2">
         {deferredPrompt && (
           <button 
             onClick={handleInstallClick}
-            className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase text-[10px] tracking-widest transition-all shadow-lg animate-bounce"
+            className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase text-[10px] tracking-widest transition-all shadow-lg animate-pulse"
           >
-            💻 Instalar no PC
+            💻 Instalar App
           </button>
         )}
         
         <button 
           onClick={() => window.confirm('Sair do sistema?') && onLogout()} 
-          className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-red-400 hover:bg-red-500/10 font-bold uppercase text-xs"
+          className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-slate-500 hover:text-red-400 hover:bg-red-500/5 font-bold uppercase text-xs transition-all"
         >
           <span>🚪</span> Sair
         </button>

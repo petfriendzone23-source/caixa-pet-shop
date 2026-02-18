@@ -29,6 +29,19 @@
 </script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐾</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      // ESSENCIAL: Configura o Tailwind para reconhecer a classe 'dark'
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              inter: ['Inter', 'sans-serif'],
+            }
+          }
+        }
+      }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Libre+Barcode+128&family=Inconsolata:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
@@ -39,20 +52,23 @@
         overflow: hidden;
       }
       
+      /* Ajuste dinâmico da cor do body para evitar flashes brancos */
+      html.dark body {
+        background-color: #020617;
+      }
+
       .custom-scrollbar::-webkit-scrollbar {
         width: 8px;
       }
       .custom-scrollbar::-webkit-scrollbar-track {
-        background: #f1f5f9;
-        border-radius: 10px;
+        background: transparent;
       }
       .custom-scrollbar::-webkit-scrollbar-thumb {
         background: #cbd5e1;
         border-radius: 10px;
-        border: 2px solid #f1f5f9;
       }
-      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
+      .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #334155;
       }
 
       .barcode {
@@ -65,22 +81,9 @@
       }
 
       @media print {
-        @page { 
-          margin: 0; 
-          size: auto; 
-        }
-        
-        body {
-          background-color: white !important;
-          color: black !important;
-          overflow: visible !important;
-        }
-
-        #root, aside, main, header, section {
-          display: none !important;
-          visibility: hidden !important;
-        }
-
+        @page { margin: 0; size: auto; }
+        body { background-color: white !important; color: black !important; overflow: visible !important; }
+        #root, aside, main, header, section { display: none !important; visibility: hidden !important; }
         .print-container {
           display: block !important;
           visibility: visible !important;
@@ -88,25 +91,14 @@
           left: 0 !important;
           top: 0 !important;
           width: 100% !important;
-          height: auto !important;
-          margin: 0 !important;
-          padding: 10mm !important;
           background: white !important;
           z-index: 999999 !important;
         }
-
-        .print-container * {
-          visibility: visible !important;
-        }
-
-        .print-hidden, button {
-          display: none !important;
-          visibility: hidden !important;
-        }
+        .print-container * { visibility: visible !important; }
       }
 
       #root:empty::before {
-        content: "🐾 NexusPet: Carregando PDV Offline...";
+        content: "🐾 NexusPet: Carregando...";
         display: flex;
         position: fixed;
         inset: 0;
@@ -115,29 +107,13 @@
         color: white;
         font-weight: bold;
         background: #0f172a;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
       }
     </style>
     <script>
-      // Registro do Service Worker otimizado para Offline-First
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(registration => {
-            console.log('NexusPet: Sistema Offline Ativo!');
-            // Força atualização se houver uma nova versão instalada
-            registration.onupdatefound = () => {
-              const installingWorker = registration.installing;
-              installingWorker.onstatechange = () => {
-                if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  if (confirm('Uma nova versão do PDV está disponível. Recarregar agora?')) {
-                    window.location.reload();
-                  }
-                }
-              };
-            };
-          }).catch(error => {
-            console.error('NexusPet: Erro ao ativar modo offline:', error);
+            console.log('NexusPet: Offline Active');
           });
         });
       }

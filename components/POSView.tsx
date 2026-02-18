@@ -142,12 +142,12 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
   return (
     <div className="flex h-full gap-6">
       <div className="flex-1 flex flex-col gap-4 overflow-hidden">
-        <div className="bg-white p-4 rounded-2xl border flex flex-wrap gap-4 items-center">
+        <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border dark:border-slate-800 flex flex-wrap gap-4 items-center shadow-sm transition-colors">
           <div className="flex-1 flex gap-2">
              <input 
               type="text" 
               placeholder="Buscar por nome, marca ou código..." 
-              className="flex-1 px-4 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-orange-500"
+              className="flex-1 px-4 py-2 border dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-xl outline-none focus:ring-2 focus:ring-orange-500"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -156,7 +156,7 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
                 ref={scannerRef}
                 type="text" 
                 placeholder="Scanner de Barras" 
-                className="w-44 px-4 py-2 border-2 border-orange-100 rounded-xl font-bold focus:border-orange-500 outline-none"
+                className="w-44 px-4 py-2 border-2 border-orange-100 dark:border-orange-900/30 dark:bg-slate-800 dark:text-white rounded-xl font-bold focus:border-orange-500 outline-none"
                 value={barcodeInput}
                 onChange={(e) => setBarcodeInput(e.target.value)}
               />
@@ -167,7 +167,7 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
               <button 
                 key={cat}
                 onClick={() => setFilter(cat)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${filter === cat ? 'bg-orange-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${filter === cat ? 'bg-orange-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
               >
                 {cat}
               </button>
@@ -185,10 +185,10 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
               <div 
                 key={p.id} 
                 onClick={() => !outOfStock && handleProductClick(p)} 
-                className={`group relative p-4 rounded-2xl border-2 transition-all flex flex-col justify-between h-36 ${outOfStock ? 'opacity-50 grayscale cursor-not-allowed border-slate-100' : 'hover:border-orange-500 cursor-pointer border-transparent shadow-sm hover:shadow-md'}`}
+                className={`group relative p-4 rounded-2xl border-2 transition-all flex flex-col justify-between h-36 ${outOfStock ? 'opacity-50 grayscale cursor-not-allowed border-slate-100 dark:border-slate-800' : 'hover:border-orange-500 cursor-pointer border-transparent shadow-sm hover:shadow-md'}`}
                 style={{ backgroundColor: p.backgroundColor || '#ffffff' }}
               >
-                <div>
+                <div className="dark:mix-blend-multiply opacity-90">
                   <div className="flex justify-between items-start mb-1">
                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{p.code}</span>
                     <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase ${p.unitType === 'kg' ? 'bg-green-100/50 text-green-700' : 'bg-blue-100/50 text-blue-700'}`}>
@@ -201,7 +201,7 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
                   )}
                 </div>
                 
-                <div className="flex justify-between items-end mt-2">
+                <div className="flex justify-between items-end mt-2 dark:mix-blend-multiply opacity-90">
                   <p className="font-black text-slate-900 text-sm">R$ {p.price.toFixed(2)}</p>
                   {p.category !== 'Serviços' && (
                     <span className={`text-[9px] font-bold ${effectiveStock < 5 ? 'text-red-500' : 'text-slate-400'}`}>
@@ -211,7 +211,7 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
                 </div>
 
                 {outOfStock && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-white/40 rounded-2xl">
+                  <div className="absolute inset-0 flex items-center justify-center bg-white/40 dark:bg-black/40 rounded-2xl">
                     <span className="bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg">SEM ESTOQUE</span>
                   </div>
                 )}
@@ -221,28 +221,28 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
         </div>
       </div>
 
-      <div className="w-96 bg-white rounded-3xl border border-slate-200 flex flex-col shadow-xl overflow-hidden">
-        <div className="p-6 border-b border-slate-100 bg-slate-50/50">
+      <div className="w-96 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-col shadow-xl overflow-hidden transition-colors">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
           <div className="flex justify-between items-center">
-            <h2 className="font-black text-slate-800 flex items-center gap-2">
+            <h2 className="font-black text-slate-800 dark:text-white flex items-center gap-2">
               <span className="text-xl">🛒</span> Carrinho
             </h2>
             <div className="flex gap-2">
               {editingSale && (
                 <button 
                   onClick={onCancelEdit}
-                  className="bg-slate-200 text-slate-600 text-[10px] font-black px-2 py-1 rounded-full uppercase hover:bg-slate-300"
+                  className="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-black px-2 py-1 rounded-full uppercase hover:bg-slate-300 transition-colors"
                 >
                   Voltar
                 </button>
               )}
-              <span className="bg-slate-200 text-slate-600 text-[10px] font-black px-2 py-1 rounded-full uppercase">
+              <span className="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-black px-2 py-1 rounded-full uppercase">
                 {cart.length} itens
               </span>
             </div>
           </div>
           <select 
-            className="w-full mt-4 p-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+            className="w-full mt-4 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-slate-800 dark:text-white transition-colors"
             value={selectedCustomerId}
             onChange={(e) => setSelectedCustomerId(e.target.value)}
           >
@@ -253,25 +253,25 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
           {cart.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-slate-300 gap-2 opacity-50">
+            <div className="h-full flex flex-col items-center justify-center text-slate-300 dark:text-slate-700 gap-2 opacity-50">
               <span className="text-4xl">🛒</span>
               <p className="text-xs font-bold uppercase tracking-widest">Carrinho Vazio</p>
             </div>
           ) : (
             cart.map(item => (
-              <div key={item.id} className="group flex gap-3 p-3 rounded-2xl border border-slate-100 hover:border-orange-100 hover:bg-orange-50/30 transition-all">
+              <div key={item.id} className="group flex gap-3 p-3 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-orange-100 dark:hover:border-orange-900/30 hover:bg-orange-50/30 dark:hover:bg-orange-900/10 transition-all">
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-xs text-slate-800 truncate">{item.name}</p>
+                  <p className="font-bold text-xs text-slate-800 dark:text-slate-200 truncate">{item.name}</p>
                   <div className="flex justify-between items-center mt-1">
-                    <span className="text-[10px] font-medium text-slate-500">
+                    <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
                       {item.quantity.toFixed(item.unitType === 'kg' ? 3 : 0)} {item.unitType} x R${item.price.toFixed(2)}
                     </span>
-                    <span className="font-black text-slate-900 text-xs">R$ {(item.price * item.quantity).toFixed(2)}</span>
+                    <span className="font-black text-slate-900 dark:text-white text-xs">R$ {(item.price * item.quantity).toFixed(2)}</span>
                   </div>
                 </div>
                 <button 
                   onClick={() => removeFromCart(item.id)} 
-                  className="text-slate-300 hover:text-red-500 transition-colors p-1"
+                  className="text-slate-300 dark:text-slate-600 hover:text-red-500 transition-colors p-1"
                 >
                   ✕
                 </button>
@@ -280,7 +280,7 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
           )}
         </div>
 
-        <div className="p-6 bg-slate-900 text-white">
+        <div className="p-6 bg-slate-900 dark:bg-black text-white">
           <div className="space-y-2 mb-6">
             <div className="flex justify-between text-slate-400 text-xs uppercase font-black tracking-widest">
               <span>Subtotal</span>
@@ -310,11 +310,11 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
       {/* Modal de Venda a Granel */}
       {bulkModalProduct && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
-          <div className="bg-white p-8 rounded-[32px] w-full max-w-sm shadow-2xl border border-slate-100">
+          <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] w-full max-w-sm shadow-2xl border border-slate-100 dark:border-slate-800">
             <div className="text-center mb-6">
               <span className="text-4xl">⚖️</span>
-              <h3 className="text-xl font-black text-slate-900 mt-2">Venda por Peso</h3>
-              <p className="text-slate-500 text-sm font-medium">{bulkModalProduct.name}</p>
+              <h3 className="text-xl font-black text-slate-900 dark:text-white mt-2">Venda por Peso</h3>
+              <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">{bulkModalProduct.name}</p>
             </div>
             
             <div className="space-y-4 mb-8">
@@ -326,7 +326,7 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
                     autoFocus
                     type="text" 
                     placeholder="0,00"
-                    className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-orange-500 outline-none text-xl font-black text-slate-800"
+                    className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 dark:bg-slate-800 dark:text-white outline-none text-xl font-black text-slate-800"
                     value={bulkValue}
                     onChange={e => setBulkValue(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && confirmBulkSale()}
@@ -346,12 +346,12 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
       {/* Modal de Pagamento */}
       {showPaymentModal && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
-          <div className="bg-white p-8 rounded-[40px] w-full max-w-md shadow-2xl border border-slate-100">
-            <h3 className="text-2xl font-black text-slate-900 mb-6">Finalizar Pagamento</h3>
+          <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] w-full max-w-md shadow-2xl border border-slate-100 dark:border-slate-800 transition-colors">
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-6">Finalizar Pagamento</h3>
             
-            <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 mb-8 flex justify-between items-center">
-              <span className="text-slate-500 font-black uppercase text-xs tracking-widest">Total a Pagar</span>
-              <span className="text-3xl font-black text-slate-900">R$ {total.toFixed(2)}</span>
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 mb-8 flex justify-between items-center transition-colors">
+              <span className="text-slate-500 dark:text-slate-400 font-black uppercase text-xs tracking-widest">Total a Pagar</span>
+              <span className="text-3xl font-black text-slate-900 dark:text-white">R$ {total.toFixed(2)}</span>
             </div>
 
             <div className="space-y-4 mb-8 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
@@ -359,7 +359,7 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
                 <div key={i} className="flex gap-3 items-center">
                   <div className="flex-1 relative">
                     <select 
-                      className="w-full pl-4 pr-10 py-3 rounded-2xl border-2 border-slate-100 outline-none text-sm font-bold bg-white appearance-none" 
+                      className="w-full pl-4 pr-10 py-3 rounded-2xl border-2 border-slate-100 dark:border-slate-800 outline-none text-sm font-bold bg-white dark:bg-slate-800 dark:text-white appearance-none transition-colors" 
                       value={p.methodId} 
                       onChange={e => {
                         const n = [...payments]; 
@@ -373,7 +373,7 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
                   <div className="w-32 relative">
                     <input 
                       type="number" 
-                      className="w-full px-3 py-3 rounded-2xl border-2 border-slate-100 outline-none text-sm font-black" 
+                      className="w-full px-3 py-3 rounded-2xl border-2 border-slate-100 dark:border-slate-800 dark:bg-slate-800 dark:text-white outline-none text-sm font-black transition-colors" 
                       value={p.amount} 
                       onChange={e => {
                         const n = [...payments]; 
@@ -384,11 +384,11 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
                   </div>
                 </div>
               ))}
-              <button onClick={() => setPayments([...payments, { methodId: paymentMethods[0].id, amount: 0 }])} className="w-full py-2 border-2 border-dashed border-slate-200 rounded-xl text-[10px] font-black text-slate-400 uppercase tracking-widest">+ Adicionar Pagamento</button>
+              <button onClick={() => setPayments([...payments, { methodId: paymentMethods[0].id, amount: 0 }])} className="w-full py-2 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-[10px] font-black text-slate-400 uppercase tracking-widest">+ Adicionar Pagamento</button>
             </div>
 
             <div className="flex flex-col gap-3">
-              <button disabled={paidAmount < total - 0.01} onClick={handleFinalize} className="w-full py-5 bg-orange-600 text-white rounded-[24px] font-black text-lg disabled:opacity-50">CONCLUIR VENDA</button>
+              <button disabled={paidAmount < total - 0.01} onClick={handleFinalize} className="w-full py-5 bg-orange-600 text-white rounded-[24px] font-black text-lg disabled:opacity-50 transition-all">CONCLUIR VENDA</button>
               <button onClick={() => setShowPaymentModal(false)} className="w-full py-3 text-slate-400 font-bold">VOLTAR</button>
             </div>
           </div>
