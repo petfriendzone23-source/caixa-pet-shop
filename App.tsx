@@ -81,11 +81,16 @@ const App: React.FC = () => {
     };
 
     setProducts(load('nxpet_products', INITIAL_PRODUCTS));
-    setSales(load('nxpet_sales', []));
+    const loadedSales = load('nxpet_sales', []);
+    setSales(loadedSales);
+    
+    const storedNextSale = parseInt(localStorage.getItem('nxpet_next_sale_number') || '1');
+    const maxSaleId = loadedSales.reduce((max: number, s: Sale) => Math.max(max, parseInt(s.id) || 0), 0);
+    setNextSaleNumber(Math.max(storedNextSale, maxSaleId + 1));
+    
     setPaymentMethods(load('nxpet_payments', DEFAULT_PAYMENTS));
     setCustomers(load('nxpet_customers', []));
     setCompanyInfo(load('nxpet_company', DEFAULT_COMPANY));
-    setNextSaleNumber(parseInt(localStorage.getItem('nxpet_next_sale_number') || '1'));
   }, []);
 
   useEffect(() => {

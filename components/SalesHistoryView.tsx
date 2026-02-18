@@ -95,7 +95,7 @@ const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({ sales, onOpenReceip
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredSales.map((sale) => (
-                <tr key={sale.id} className="hover:bg-slate-50/80 transition-colors">
+                <tr key={`${sale.id}-${sale.timestamp}`} className="hover:bg-slate-50/80 transition-colors">
                   <td className="px-8 py-4 font-mono text-[11px] font-bold text-slate-600 bg-slate-50/50">
                     {sale.id}
                   </td>
