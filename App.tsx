@@ -103,20 +103,79 @@ const App: React.FC = () => {
   const handleLogout = () => { setIsAuthenticated(false); setCurrentUser(null); localStorage.removeItem('nxpet_session'); };
 
   const handleCompleteSale = (sale: Sale) => {
-    setSales(prev => [sale, ...prev]);
+    const isEdit = sales.some(s => s.id === sale.id);
+    
+    if (isEdit) {
+      const oldSale = sales.find(s => s.id === sale.id)!;
+      // Reverte estoque da venda antiga
+      setProducts(prev => prev.map(p => {
+        const item = oldSale.items.find(i => i.id === p.id);
+        if (item && p.category !== 'Serviços') return { ...p, stock: p.stock + item.quantity };
+        return p;
+      }));
+      
+      // Substitui a venda
+      setSales(prev => prev.map(s => s.id === sale.id ? sale : s));
+    } else {
+      setSales(prev => [sale, ...prev]);
+      setNextSaleNumber(n => n + 1);
+    }
+
+    // Aplica estoque da nova venda (ou venda editada)
     setProducts(prev => prev.map(p => {
       const item = sale.items.find(i => i.id === p.id);
       if (item && p.category !== 'Serviços') return { ...p, stock: Math.max(0, p.stock - item.quantity) };
       return p;
     }));
-    setNextSaleNumber(n => n + 1);
+
     setLastSale(sale);
+    setEditingSale(null);
+  };
+
+  const handleCancelSale = (saleId: string) => {
+    const saleToCancel = sales.find(s => s.id === saleId);
+    if (!saleToCancel) return;
+
+    if (confirm(`⚠️ Tem certeza que deseja CANCELAR a venda ${saleId}? Esta ação é irreversível e o estoque será restaurado.`)) {
+      // Restaura o estoque
+      setProducts(prev => prev.map(p => {
+        const item = saleToCancel.items.find(i => i.id === p.id);
+        if (item && p.category !== 'Serviços') {
+          return { ...p, stock: p.stock + item.quantity };
+        }
+        return p;
+      }));
+
+      // Remove a venda
+      setSales(prev => prev.filter(s => s.id !== saleId));
+      
+      if (editingSale?.id === saleId) {
+        setEditingSale(null);
+        setCurrentView('sales');
+      }
+      
+      alert(`Venda ${saleId} cancelada com sucesso.`);
+    }
   };
 
   const renderView = () => {
     switch (currentView) {
-      case 'pos': return <POSView products={products} paymentMethods={paymentMethods} customers={customers} nextSaleNumber={nextSaleNumber} onCompleteSale={handleCompleteSale} editingSale={editingSale} onCancelEdit={() => setEditingSale(null)} />;
-      case 'sales': return <SalesHistoryView sales={sales} onOpenReceipt={setLastSale} onEditSale={(s) => { setEditingSale(s); setCurrentView('pos'); }} />;
+      case 'pos': return <POSView 
+        products={products} 
+        paymentMethods={paymentMethods} 
+        customers={customers} 
+        nextSaleNumber={nextSaleNumber} 
+        onCompleteSale={handleCompleteSale} 
+        editingSale={editingSale} 
+        onCancelEdit={() => setEditingSale(null)} 
+        onDeleteSale={handleCancelSale}
+      />;
+      case 'sales': return <SalesHistoryView 
+        sales={sales} 
+        onOpenReceipt={setLastSale} 
+        onEditSale={(s) => { setEditingSale(s); setCurrentView('pos'); }} 
+        onCancelSale={handleCancelSale}
+      />;
       case 'inventory': return <InventoryView products={products} onUpdateStock={(id, s) => setProducts(products.map(p => p.id === id ? {...p, stock: s} : p))} onSaveProduct={(p) => setProducts(products.find(x => x.id === p.id) ? products.map(x => x.id === p.id ? p : x) : [p, ...products])} onDeleteProduct={(id) => setProducts(products.filter(p => p.id !== id))} />;
       case 'customers': return <CustomerView customers={customers} onSaveCustomer={(c) => setCustomers(customers.find(x => x.id === c.id) ? customers.map(x => x.id === c.id ? c : x) : [c, ...customers])} onDeleteCustomer={(id) => setCustomers(customers.filter(c => c.id !== id))} />;
       case 'dashboard': return <DashboardView sales={sales} />;
@@ -167,7 +226,12 @@ const App: React.FC = () => {
           {renderView()}
         </section>
       </main>
-      {lastSale && <ReceiptModal sale={lastSale} companyInfo={companyInfo} onClose={() => setLastSale(null)} />}
+      {lastSale && <ReceiptModal 
+        sale={lastSale} 
+        companyInfo={companyInfo} 
+        onClose={() => setLastSale(null)} 
+        onCancelSale={handleCancelSale}
+      />}
     </div>
   );
 };

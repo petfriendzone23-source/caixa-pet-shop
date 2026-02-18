@@ -196,11 +196,11 @@ const DashboardView: React.FC<DashboardViewProps> = ({ sales }) => {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#64748b'}} />
-                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#64748b'}} />
+                <XAxis xAxisId={0} dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#64748b'}} />
+                <YAxis yAxisId={0} axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#64748b'}} />
                 <Tooltip 
                   contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                  formatter={(value: number) => [`R$ ${value.toFixed(2)}`, 'Vendido']}
+                  formatter={(value: any) => [`R$ ${Number(value || 0).toFixed(2)}`, 'Vendido']}
                 />
                 <Area type="monotone" dataKey="value" stroke="#f97316" strokeWidth={4} fillOpacity={1} fill="url(#colorRev)" />
               </AreaChart>

@@ -6,9 +6,10 @@ interface SalesHistoryViewProps {
   sales: Sale[];
   onOpenReceipt: (sale: Sale) => void;
   onEditSale: (sale: Sale) => void;
+  onCancelSale: (saleId: string) => void;
 }
 
-const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({ sales, onOpenReceipt, onEditSale }) => {
+const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({ sales, onOpenReceipt, onEditSale, onCancelSale }) => {
   const [filterDate, setFilterDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [search, setSearch] = useState('');
 
@@ -131,6 +132,13 @@ const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({ sales, onOpenReceip
                         title="Editar Venda"
                       >
                         ✏️ Editar
+                      </button>
+                      <button 
+                        onClick={() => onCancelSale(sale.id)}
+                        className="p-2 bg-red-50 hover:bg-red-600 text-red-600 hover:text-white rounded-xl transition-all border border-red-100 hover:border-red-600 flex items-center gap-2 text-[10px] font-black uppercase shadow-sm"
+                        title="Cancelar Venda"
+                      >
+                        🗑️ Cancelar
                       </button>
                     </div>
                   </td>

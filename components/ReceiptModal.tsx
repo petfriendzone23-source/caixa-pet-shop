@@ -6,11 +6,17 @@ interface ReceiptModalProps {
   sale: Sale;
   companyInfo: CompanyInfo;
   onClose: () => void;
+  onCancelSale: (saleId: string) => void;
 }
 
-const ReceiptModal: React.FC<ReceiptModalProps> = ({ sale, companyInfo, onClose }) => {
+const ReceiptModal: React.FC<ReceiptModalProps> = ({ sale, companyInfo, onClose, onCancelSale }) => {
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleCancel = () => {
+    onCancelSale(sale.id);
+    onClose();
   };
 
   return (
@@ -96,18 +102,26 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ sale, companyInfo, onClose 
           </div>
         </div>
 
-        <div className="p-4 bg-slate-50 flex gap-3 print:hidden border-t border-slate-100">
+        <div className="p-4 bg-slate-50 flex flex-col gap-2 print:hidden border-t border-slate-100">
+          <div className="flex gap-3">
+            <button 
+              onClick={onClose}
+              className="flex-1 px-4 py-3 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold text-xs uppercase hover:bg-slate-100 transition-colors"
+            >
+              Fechar
+            </button>
+            <button 
+              onClick={handlePrint}
+              className="flex-1 px-4 py-3 rounded-xl bg-orange-600 text-white font-black text-xs uppercase hover:bg-orange-700 shadow-lg shadow-orange-100 transition-colors flex items-center justify-center gap-2"
+            >
+              <span>🖨️</span> Imprimir
+            </button>
+          </div>
           <button 
-            onClick={onClose}
-            className="flex-1 px-4 py-3 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold text-xs uppercase hover:bg-slate-100 transition-colors"
+            onClick={handleCancel}
+            className="w-full px-4 py-2 rounded-xl bg-red-50 text-red-600 font-black text-[10px] uppercase hover:bg-red-600 hover:text-white transition-all border border-red-100"
           >
-            Fechar
-          </button>
-          <button 
-            onClick={handlePrint}
-            className="flex-1 px-4 py-3 rounded-xl bg-orange-600 text-white font-black text-xs uppercase hover:bg-orange-700 shadow-lg shadow-orange-100 transition-colors flex items-center justify-center gap-2"
-          >
-            <span>🖨️</span> Imprimir Notinha
+            🗑️ Cancelar Venda (Excluir)
           </button>
         </div>
       </div>

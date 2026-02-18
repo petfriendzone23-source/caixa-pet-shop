@@ -293,6 +293,14 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
           </div>
           
           <div className="flex flex-col gap-2">
+            {editingSale && (
+              <button 
+                onClick={() => onDeleteSale && onDeleteSale(editingSale.id)}
+                className="w-full py-3 bg-red-50 hover:bg-red-600 text-red-600 hover:text-white rounded-2xl font-black text-sm transition-all active:scale-95 border border-red-100 hover:border-red-600"
+              >
+                CANCELAR VENDA (EXCLUIR)
+              </button>
+            )}
             <button 
               disabled={cart.length === 0} 
               onClick={() => { 
