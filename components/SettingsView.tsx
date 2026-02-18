@@ -7,6 +7,8 @@ interface SettingsViewProps {
   companyInfo: CompanyInfo;
   isDarkMode: boolean;
   setIsDarkMode: (val: boolean) => void;
+  uiScale: number;
+  setUiScale: (val: number) => void;
   onAddMethod: (name: string, fee: number) => void;
   onRemoveMethod: (id: string) => void;
   onUpdateMethodFee: (id: string, fee: number) => void;
@@ -14,7 +16,7 @@ interface SettingsViewProps {
 }
 
 const SettingsView: React.FC<SettingsViewProps> = ({ 
-  paymentMethods, companyInfo, isDarkMode, setIsDarkMode, onAddMethod, onRemoveMethod, onUpdateMethodFee, onUpdateCompanyInfo
+  paymentMethods, companyInfo, isDarkMode, setIsDarkMode, uiScale, setUiScale, onAddMethod, onRemoveMethod, onUpdateMethodFee, onUpdateCompanyInfo
 }) => {
   const [newMethodName, setNewMethodName] = useState('');
   const [newMethodFee, setNewMethodFee] = useState<number>(0);
@@ -70,17 +72,53 @@ const SettingsView: React.FC<SettingsViewProps> = ({
         <h3 className="text-xl font-black mb-6 uppercase text-slate-800 dark:text-white flex items-center gap-2">
           <span>🎨</span> Aparência e Tema
         </h3>
-        <div className="flex items-center justify-between p-6 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-700">
-          <div>
-            <h4 className="font-bold text-slate-900 dark:text-slate-100">Modo Noturno</h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Ative para reduzir o cansaço visual em ambientes escuros.</p>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-6 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-700">
+            <div>
+              <h4 className="font-bold text-slate-900 dark:text-slate-100">Modo Noturno</h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Ative para reduzir o cansaço visual em ambientes escuros.</p>
+            </div>
+            <button 
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className={`w-16 h-8 rounded-full transition-all relative ${isDarkMode ? 'bg-orange-600' : 'bg-slate-300'}`}
+            >
+              <div className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-md transition-all ${isDarkMode ? 'left-9' : 'left-1'}`}></div>
+            </button>
           </div>
-          <button 
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            className={`w-16 h-8 rounded-full transition-all relative ${isDarkMode ? 'bg-orange-600' : 'bg-slate-300'}`}
-          >
-            <div className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-md transition-all ${isDarkMode ? 'left-9' : 'left-1'}`}></div>
-          </button>
+
+          <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-700">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h4 className="font-bold text-slate-900 dark:text-slate-100">Escala da Interface (Resolução)</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Ajuste o tamanho dos elementos para melhor visualização.</p>
+              </div>
+              <span className="px-3 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-full font-black text-sm">
+                {Math.round(uiScale * 100)}%
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
+              <input 
+                type="range" 
+                min="0.75" 
+                max="1.5" 
+                step="0.05" 
+                value={uiScale} 
+                onChange={(e) => setUiScale(parseFloat(e.target.value))}
+                className="flex-1 h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-orange-600"
+              />
+              <div className="flex gap-2">
+                {[0.8, 1.0, 1.2].map(val => (
+                  <button 
+                    key={val}
+                    onClick={() => setUiScale(val)}
+                    className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase transition-all ${uiScale === val ? 'bg-orange-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700'}`}
+                  >
+                    {val === 0.8 ? 'Pequeno' : val === 1.0 ? 'Normal' : 'Grande'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

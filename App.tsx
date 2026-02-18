@@ -31,6 +31,7 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => localStorage.getItem('nxpet_dark_mode') === 'true');
+  const [uiScale, setUiScale] = useState<number>(() => parseFloat(localStorage.getItem('nxpet_ui_scale') || '1'));
   
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
@@ -51,6 +52,11 @@ const App: React.FC = () => {
     }
     localStorage.setItem('nxpet_dark_mode', isDarkMode.toString());
   }, [isDarkMode]);
+
+  useEffect(() => {
+    document.documentElement.style.fontSize = `${uiScale * 16}px`;
+    localStorage.setItem('nxpet_ui_scale', uiScale.toString());
+  }, [uiScale]);
 
   useEffect(() => {
     const handleStatus = () => setIsOnline(navigator.onLine);
@@ -114,7 +120,18 @@ const App: React.FC = () => {
       case 'inventory': return <InventoryView products={products} onUpdateStock={(id, s) => setProducts(products.map(p => p.id === id ? {...p, stock: s} : p))} onSaveProduct={(p) => setProducts(products.find(x => x.id === p.id) ? products.map(x => x.id === p.id ? p : x) : [p, ...products])} onDeleteProduct={(id) => setProducts(products.filter(p => p.id !== id))} />;
       case 'customers': return <CustomerView customers={customers} onSaveCustomer={(c) => setCustomers(customers.find(x => x.id === c.id) ? customers.map(x => x.id === c.id ? c : x) : [c, ...customers])} onDeleteCustomer={(id) => setCustomers(customers.filter(c => c.id !== id))} />;
       case 'dashboard': return <DashboardView sales={sales} />;
-      case 'settings': return <SettingsView paymentMethods={paymentMethods} companyInfo={companyInfo} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} onAddMethod={(n, f) => setPaymentMethods([...paymentMethods, {id: Math.random().toString(), name: n, feePercent: f, icon: '💰'}])} onRemoveMethod={(id) => setPaymentMethods(paymentMethods.filter(p => p.id !== id))} onUpdateMethodFee={(id, f) => setPaymentMethods(paymentMethods.map(p => p.id === id ? {...p, feePercent: f} : p))} onUpdateCompanyInfo={setCompanyInfo} />;
+      case 'settings': return <SettingsView 
+        paymentMethods={paymentMethods} 
+        companyInfo={companyInfo} 
+        isDarkMode={isDarkMode} 
+        setIsDarkMode={setIsDarkMode} 
+        uiScale={uiScale}
+        setUiScale={setUiScale}
+        onAddMethod={(n, f) => setPaymentMethods([...paymentMethods, {id: Math.random().toString(), name: n, feePercent: f, icon: '💰'}])} 
+        onRemoveMethod={(id) => setPaymentMethods(paymentMethods.filter(p => p.id !== id))} 
+        onUpdateMethodFee={(id, f) => setPaymentMethods(paymentMethods.map(p => p.id === id ? {...p, feePercent: f} : p))} 
+        onUpdateCompanyInfo={setCompanyInfo} 
+      />;
       default: return null;
     }
   };
