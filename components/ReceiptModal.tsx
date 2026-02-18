@@ -15,8 +15,9 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ sale, companyInfo, onClose 
 
   return (
     <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4 print:p-0 print:bg-white print:static print:inset-auto">
+      {/* O container principal ganha a classe 'print-container' referenciada no CSS global */}
       <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden print:shadow-none print:w-full print:rounded-none print-container">
-        <div className="p-8 print:p-2 font-mono-receipt">
+        <div className="p-8 print:p-4 font-mono-receipt">
           <div className="text-center mb-6 border-b border-dashed border-slate-300 pb-4">
             <h2 className="text-xl font-black text-slate-900 uppercase tracking-tighter">{companyInfo.name}</h2>
             <p className="text-[10px] text-slate-500 font-bold">CNPJ/CPF: {companyInfo.document}</p>
@@ -40,7 +41,9 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ sale, companyInfo, onClose 
               <div key={idx} className="grid grid-cols-12 text-[11px] leading-tight text-slate-800">
                 <div className="col-span-6 flex flex-col">
                   <span className="font-bold uppercase">{item.name}</span>
-                  <span className="text-[9px] text-slate-500">UN: R$ {item.price.toFixed(2)}</span>
+                  <span className="text-[9px] text-slate-500">
+                    {item.subgroup && `${item.subgroup} | `}R$ {item.price.toFixed(2)}
+                  </span>
                 </div>
                 <span className="col-span-2 text-center self-center font-bold">
                   {item.unitType === 'kg' ? item.quantity.toFixed(3) : item.quantity}
@@ -89,7 +92,7 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ sale, companyInfo, onClose 
           <div className="mt-8 flex flex-col items-center gap-1 border-t border-dashed border-slate-300 pt-6">
             <div className="barcode text-5xl text-black leading-none">{sale.id}</div>
             <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 mt-2">Obrigado pela preferência!</p>
-            <p className="text-[7px] text-slate-300 mt-1 font-bold">NexusPet PDV v1.5.0</p>
+            <p className="text-[7px] text-slate-300 mt-1 font-bold italic">NexusPet PDV v1.5.0</p>
           </div>
         </div>
 

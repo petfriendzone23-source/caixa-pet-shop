@@ -7,6 +7,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   { id: '3', code: 'SAC-15', name: 'Ração Golden Adulto Frango Saco 15kg', subgroup: 'GOLDEN', costPrice: 140.00, price: 189.90, category: 'Ração', stock: 10, unitType: 'un', backgroundColor: '#fff7ed' },
   { id: '4', code: 'SAC-SNOW', name: 'Ração Snow Cat Mix Gatos 10kg', subgroup: 'SNOW CAT', costPrice: 110.00, price: 155.00, category: 'Ração', stock: 5, unitType: 'un', backgroundColor: '#fff7ed' },
   { id: '5', code: 'RAC-PAN', name: 'Ração Panelaço Premium 20kg', subgroup: 'PANELAÇO', costPrice: 130.00, price: 175.00, category: 'Ração', stock: 8, unitType: 'un', backgroundColor: '#fff7ed' },
+  { id: 'cam-01', code: 'CAM-001', name: 'Cama Pet Luxo M', subgroup: 'Panelaço', costPrice: 45.00, price: 89.90, category: 'Cama', stock: 5, unitType: 'un', backgroundColor: '#fae8ff' },
   { id: '6', code: 'ACE001', name: 'Coleira de Couro Ajustável', subgroup: 'Nexus', costPrice: 15.00, price: 35.00, category: 'Acessórios', stock: 10, unitType: 'un', backgroundColor: '#dcfce7' },
   { id: '7', code: 'HIG001', name: 'Shampoo Neutro 500ml', subgroup: 'PetClean', costPrice: 18.00, price: 32.00, category: 'Higiene', stock: 15, unitType: 'un', backgroundColor: '#dbeafe' },
   { id: 's1', code: 'SRV001', name: 'Banho - Porte Pequeno', subgroup: 'Serviço', costPrice: 15.00, price: 50.00, category: 'Serviços', stock: 999, unitType: 'un', backgroundColor: '#f3e8ff' },
