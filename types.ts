@@ -6,6 +6,7 @@ export interface Product {
   costPrice: number;
   price: number;
   category: string;
+  subgroup?: string; // Ex: Marca da ração
   stock: number;
   unitType: 'un' | 'kg'; // un = Unidade/Saco Fechado, kg = Peso/Granel
   backgroundColor?: string; // Cor de fundo do card no PDV

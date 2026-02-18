@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Product } from '../types';
-import { CATEGORIES, PRODUCT_COLORS } from '../constants';
+import { CATEGORIES, PRODUCT_COLORS, SUBGROUPS_RACAO } from '../constants';
 
 interface InventoryViewProps {
   products: Product[];
@@ -19,6 +19,7 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
     code: '',
     name: '',
     category: 'Ração',
+    subgroup: 'Golden',
     costPrice: 0,
     price: 0,
     stock: 0,
@@ -53,6 +54,7 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
         code: '',
         name: '',
         category: 'Ração',
+        subgroup: 'Golden',
         costPrice: 0,
         price: 0,
         stock: 0,
@@ -79,7 +81,7 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
         <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
           <div>
             <h2 className="text-xl font-black text-slate-800">📦 Estoque e Catálogo</h2>
-            <p className="text-xs text-slate-500 mt-1">Gerencie produtos e cores de identificação</p>
+            <p className="text-xs text-slate-500 mt-1">Gerencie produtos e subgrupos de marcas</p>
           </div>
           <button 
             onClick={() => openModal()}
@@ -95,7 +97,7 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
               <tr>
                 <th className="px-6 py-4">Cor</th>
                 <th className="px-6 py-4">Código / Barras</th>
-                <th className="px-6 py-4">Nome</th>
+                <th className="px-6 py-4">Nome / Marca</th>
                 <th className="px-6 py-4">Tipo</th>
                 <th className="px-6 py-4">Preço</th>
                 <th className="px-6 py-4">Estoque</th>
@@ -124,7 +126,16 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
                       <span className="font-bold text-slate-800 text-sm">{product.name}</span>
-                      <span className="text-[10px] text-slate-400 uppercase font-black">{product.category}</span>
+                      <div className="flex gap-2 mt-1">
+                        <span className="text-[9px] text-slate-400 uppercase font-black px-1.5 py-0.5 bg-slate-100 rounded">
+                          {product.category}
+                        </span>
+                        {product.subgroup && (
+                          <span className="text-[9px] text-orange-500 uppercase font-black px-1.5 py-0.5 bg-orange-50 rounded border border-orange-100">
+                            {product.subgroup}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -162,7 +173,6 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
             </div>
             
             <form onSubmit={handleSubmit} className="p-8 space-y-6">
-              {/* Seletor de Cores */}
               <div>
                 <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-3">Cor de Exibição no PDV</label>
                 <div className="flex flex-wrap gap-2">
@@ -242,6 +252,27 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
                 </div>
 
                 <div>
+                  <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1">Subgrupo / Marca</label>
+                  {formData.category === 'Ração' ? (
+                    <select 
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-100 focus:border-orange-500 outline-none text-sm bg-white"
+                      value={formData.subgroup}
+                      onChange={e => setFormData({...formData, subgroup: e.target.value})}
+                    >
+                      {SUBGROUPS_RACAO.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  ) : (
+                    <input 
+                      type="text" 
+                      placeholder="Ex: Marca"
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-100 focus:border-orange-500 outline-none text-sm"
+                      value={formData.subgroup || ''}
+                      onChange={e => setFormData({...formData, subgroup: e.target.value})}
+                    />
+                  )}
+                </div>
+
+                <div>
                   <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1">Estoque Inicial</label>
                   <input 
                     type="number" 
@@ -263,13 +294,13 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1">Venda (R$)</label>
+                <div className="col-span-2">
+                  <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1">Preço de Venda (R$)</label>
                   <input 
                     required
                     type="number" 
                     step="0.01"
-                    className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-100 focus:border-orange-500 outline-none text-sm font-black text-orange-600"
+                    className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-100 focus:border-orange-500 outline-none text-lg font-black text-orange-600"
                     value={formData.price}
                     onChange={e => setFormData({...formData, price: parseFloat(e.target.value) || 0})}
                   />
@@ -278,7 +309,7 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
 
               <div className="pt-4 flex gap-3">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-4 py-3 rounded-xl border-2 border-slate-100 text-slate-500 font-bold">Cancelar</button>
-                <button type="submit" className="flex-1 px-4 py-3 rounded-xl bg-orange-600 text-white font-black hover:bg-orange-700 shadow-xl shadow-orange-100">Salvar</button>
+                <button type="submit" className="flex-1 px-4 py-3 rounded-xl bg-orange-600 text-white font-black hover:bg-orange-700 shadow-xl shadow-orange-100">Salvar Item</button>
               </div>
             </form>
           </div>

@@ -134,7 +134,9 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
 
   const filteredProducts = products.filter(p => 
     (filter === 'Todos' || p.category === filter) &&
-    (p.name.toLowerCase().includes(search.toLowerCase()) || p.code.toLowerCase().includes(search.toLowerCase()))
+    (p.name.toLowerCase().includes(search.toLowerCase()) || 
+     p.code.toLowerCase().includes(search.toLowerCase()) ||
+     p.subgroup?.toLowerCase().includes(search.toLowerCase()))
   );
 
   return (
@@ -144,7 +146,7 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
           <div className="flex-1 flex gap-2">
              <input 
               type="text" 
-              placeholder="Buscar por nome ou código..." 
+              placeholder="Buscar por nome, marca ou código..." 
               className="flex-1 px-4 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-orange-500"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -193,7 +195,10 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
                       {p.unitType}
                     </span>
                   </div>
-                  <h3 className="font-bold text-xs leading-tight text-slate-800 line-clamp-2">{p.name}</h3>
+                  <h3 className="font-bold text-xs leading-tight text-slate-800 line-clamp-1">{p.name}</h3>
+                  {p.subgroup && (
+                    <p className="text-[9px] font-black text-orange-500 uppercase mt-1 tracking-wider">{p.subgroup}</p>
+                  )}
                 </div>
                 
                 <div className="flex justify-between items-end mt-2">

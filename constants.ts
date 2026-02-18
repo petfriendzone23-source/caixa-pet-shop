@@ -2,16 +2,24 @@
 import { Product } from './types.ts';
 
 export const INITIAL_PRODUCTS: Product[] = [
-  { id: '1', code: 'RAC-KG', name: 'Ração Golden Adulto Frango (Granel)', costPrice: 12.00, price: 18.50, category: 'Ração', stock: 50, unitType: 'kg', backgroundColor: '#fef3c7' },
-  { id: '2', code: 'RAC-KG2', name: 'Ração Royal Canin Gatos (Granel)', costPrice: 25.00, price: 38.90, category: 'Ração', stock: 30, unitType: 'kg', backgroundColor: '#fef3c7' },
-  { id: '3', code: 'SAC-15', name: 'Ração Golden Adulto Frango Saco 15kg', costPrice: 140.00, price: 189.90, category: 'Ração', stock: 10, unitType: 'un', backgroundColor: '#fff7ed' },
-  { id: '4', code: 'SAC-10', name: 'Ração Premier Filhotes Saco 10kg', costPrice: 160.00, price: 215.00, category: 'Ração', stock: 5, unitType: 'un', backgroundColor: '#fff7ed' },
-  { id: '5', code: 'ACE001', name: 'Coleira de Couro Ajustável', costPrice: 15.00, price: 35.00, category: 'Acessórios', stock: 10, unitType: 'un', backgroundColor: '#dcfce7' },
-  { id: '6', code: 'HIG001', name: 'Shampoo Neutro 500ml', costPrice: 18.00, price: 32.00, category: 'Higiene', stock: 15, unitType: 'un', backgroundColor: '#dbeafe' },
-  { id: 's1', code: 'SRV001', name: 'Banho - Porte Pequeno', costPrice: 15.00, price: 50.00, category: 'Serviços', stock: 999, unitType: 'un', backgroundColor: '#f3e8ff' },
+  { id: '1', code: 'RAC-KG1', name: 'Ração Golden Adulto Frango (Granel)', subgroup: 'GOLDEN', costPrice: 12.00, price: 18.50, category: 'Ração', stock: 50, unitType: 'kg', backgroundColor: '#fef3c7' },
+  { id: '2', code: 'RAC-KG2', name: 'Ração Special Dog Prime (Granel)', subgroup: 'SPECIAL DOG', costPrice: 15.00, price: 25.90, category: 'Ração', stock: 30, unitType: 'kg', backgroundColor: '#fef3c7' },
+  { id: '3', code: 'SAC-15', name: 'Ração Golden Adulto Frango Saco 15kg', subgroup: 'GOLDEN', costPrice: 140.00, price: 189.90, category: 'Ração', stock: 10, unitType: 'un', backgroundColor: '#fff7ed' },
+  { id: '4', code: 'SAC-SNOW', name: 'Ração Snow Cat Mix Gatos 10kg', subgroup: 'SNOW CAT', costPrice: 110.00, price: 155.00, category: 'Ração', stock: 5, unitType: 'un', backgroundColor: '#fff7ed' },
+  { id: '5', code: 'RAC-PAN', name: 'Ração Panelaço Premium 20kg', subgroup: 'PANELAÇO', costPrice: 130.00, price: 175.00, category: 'Ração', stock: 8, unitType: 'un', backgroundColor: '#fff7ed' },
+  { id: '6', code: 'ACE001', name: 'Coleira de Couro Ajustável', subgroup: 'Nexus', costPrice: 15.00, price: 35.00, category: 'Acessórios', stock: 10, unitType: 'un', backgroundColor: '#dcfce7' },
+  { id: '7', code: 'HIG001', name: 'Shampoo Neutro 500ml', subgroup: 'PetClean', costPrice: 18.00, price: 32.00, category: 'Higiene', stock: 15, unitType: 'un', backgroundColor: '#dbeafe' },
+  { id: 's1', code: 'SRV001', name: 'Banho - Porte Pequeno', subgroup: 'Serviço', costPrice: 15.00, price: 50.00, category: 'Serviços', stock: 999, unitType: 'un', backgroundColor: '#f3e8ff' },
 ];
 
 export const CATEGORIES = ['Todos', 'Ração', 'Sache', 'Cama', 'Acessórios', 'Vestuário', 'Higiene', 'Saúde', 'Serviços'];
+
+export const SUBGROUPS_RACAO = [
+  'SPECIAL DOG', 
+  'SNOW CAT', 
+  'PANELAÇO', 
+  'GOLDEN'
+];
 
 export const PRODUCT_COLORS = [
   { name: 'Branco', hex: '#ffffff' },
