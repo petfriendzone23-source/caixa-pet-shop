@@ -305,6 +305,24 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
                     onChange={e => setFormData({...formData, price: parseFloat(e.target.value) || 0})}
                   />
                 </div>
+
+                {/* Painel de Lucratividade */}
+                <div className="col-span-2 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Lucro por Unidade</p>
+                    <p className="text-lg font-black text-green-600">
+                      R$ {(formData.price - formData.costPrice).toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Margem (Markup)</p>
+                    <p className={`text-lg font-black ${formData.costPrice > 0 && (formData.price - formData.costPrice) / formData.costPrice > 0.3 ? 'text-green-600' : 'text-orange-500'}`}>
+                      {formData.costPrice > 0 
+                        ? (((formData.price - formData.costPrice) / formData.costPrice) * 100).toFixed(1) 
+                        : '0.0'}%
+                    </p>
+                  </div>
+                </div>
               </div>
 
               <div className="pt-4 flex gap-3">
