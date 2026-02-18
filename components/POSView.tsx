@@ -102,7 +102,6 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
     if (paidAmount < total - 0.01) return alert("Pagamento insuficiente");
     const customer = customers.find(c => c.id === selectedCustomerId);
     
-    // CORREÇÃO: Cálculo correto das taxas no momento da finalização
     const paymentEntries: PaymentEntry[] = payments.map(p => {
       const method = paymentMethods.find(m => m.id === p.methodId);
       const feePercent = method?.feePercent || 0;
@@ -174,7 +173,7 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 overflow-y-auto pr-2">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 overflow-y-auto pr-2 custom-scrollbar">
           {filteredProducts.map(p => {
             const originalQty = editingSale?.items.find(i => i.id === p.id)?.quantity || 0;
             const effectiveStock = p.category === 'Serviços' ? 999 : p.stock + originalQty;
@@ -184,12 +183,13 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
               <div 
                 key={p.id} 
                 onClick={() => !outOfStock && handleProductClick(p)} 
-                className={`group relative bg-white p-4 rounded-2xl border-2 transition-all flex flex-col justify-between h-36 ${outOfStock ? 'opacity-50 grayscale cursor-not-allowed border-slate-100' : 'hover:border-orange-500 cursor-pointer border-transparent shadow-sm hover:shadow-md'}`}
+                className={`group relative p-4 rounded-2xl border-2 transition-all flex flex-col justify-between h-36 ${outOfStock ? 'opacity-50 grayscale cursor-not-allowed border-slate-100' : 'hover:border-orange-500 cursor-pointer border-transparent shadow-sm hover:shadow-md'}`}
+                style={{ backgroundColor: p.backgroundColor || '#ffffff' }}
               >
                 <div>
                   <div className="flex justify-between items-start mb-1">
                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{p.code}</span>
-                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase ${p.unitType === 'kg' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
+                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase ${p.unitType === 'kg' ? 'bg-green-100/50 text-green-700' : 'bg-blue-100/50 text-blue-700'}`}>
                       {p.unitType}
                     </span>
                   </div>
@@ -246,7 +246,7 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
           </select>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
           {cart.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-slate-300 gap-2 opacity-50">
               <span className="text-4xl">🛒</span>
@@ -298,20 +298,11 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
             >
               {editingSale ? 'SALVAR ALTERAÇÕES' : 'FINALIZAR VENDA'}
             </button>
-
-            {editingSale && onDeleteSale && (
-              <button 
-                onClick={() => onDeleteSale(editingSale.id)}
-                className="w-full py-2 bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white rounded-xl text-[10px] font-black uppercase transition-all"
-              >
-                🗑️ CANCELAR VENDA PERMANENTEMENTE
-              </button>
-            )}
           </div>
         </div>
       </div>
 
-      {/* Modal de Venda a Granel (Peso) */}
+      {/* Modal de Venda a Granel */}
       {bulkModalProduct && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
           <div className="bg-white p-8 rounded-[32px] w-full max-w-sm shadow-2xl border border-slate-100">
@@ -319,12 +310,11 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
               <span className="text-4xl">⚖️</span>
               <h3 className="text-xl font-black text-slate-900 mt-2">Venda por Peso</h3>
               <p className="text-slate-500 text-sm font-medium">{bulkModalProduct.name}</p>
-              <p className="text-orange-600 font-black text-xs uppercase mt-1">Preço/Kg: R$ {bulkModalProduct.price.toFixed(2)}</p>
             </div>
             
             <div className="space-y-4 mb-8">
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1 block">Valor que o cliente quer pagar (R$)</label>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1 block">Valor em Reais (R$)</label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">R$</span>
                   <input 
@@ -337,27 +327,12 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
                     onKeyDown={e => e.key === 'Enter' && confirmBulkSale()}
                   />
                 </div>
-                {parseFloat(bulkValue.replace(',', '.')) > 0 && (
-                  <p className="text-center mt-3 text-xs font-bold text-slate-500 animate-in fade-in slide-in-from-top-1">
-                    Isso equivale a <span className="text-orange-600">{(parseFloat(bulkValue.replace(',', '.')) / bulkModalProduct.price).toFixed(3)} Kg</span>
-                  </p>
-                )}
               </div>
             </div>
 
             <div className="flex flex-col gap-2">
-              <button 
-                onClick={confirmBulkSale} 
-                className="w-full py-4 bg-orange-600 text-white rounded-2xl font-black shadow-lg shadow-orange-100 hover:bg-orange-700 transition-all"
-              >
-                ADICIONAR AO CARRINHO
-              </button>
-              <button 
-                onClick={() => setBulkModalProduct(null)} 
-                className="w-full py-3 text-slate-400 font-bold hover:text-slate-600 transition-colors"
-              >
-                CANCELAR
-              </button>
+              <button onClick={confirmBulkSale} className="w-full py-4 bg-orange-600 text-white rounded-2xl font-black">ADICIONAR</button>
+              <button onClick={() => setBulkModalProduct(null)} className="w-full py-3 text-slate-400 font-bold">CANCELAR</button>
             </div>
           </div>
         </div>
@@ -367,20 +342,19 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
       {showPaymentModal && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
           <div className="bg-white p-8 rounded-[40px] w-full max-w-md shadow-2xl border border-slate-100">
-            <h3 className="text-2xl font-black text-slate-900 mb-2">{editingSale ? 'Atualizar Pagamento' : 'Finalizar Pagamento'}</h3>
-            <p className="text-sm text-slate-500 font-medium mb-6">Total da venda:</p>
+            <h3 className="text-2xl font-black text-slate-900 mb-6">Finalizar Pagamento</h3>
             
             <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 mb-8 flex justify-between items-center">
               <span className="text-slate-500 font-black uppercase text-xs tracking-widest">Total a Pagar</span>
               <span className="text-3xl font-black text-slate-900">R$ {total.toFixed(2)}</span>
             </div>
 
-            <div className="space-y-4 mb-8 max-h-60 overflow-y-auto pr-2">
+            <div className="space-y-4 mb-8 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
               {payments.map((p, i) => (
-                <div key={i} className="flex gap-3 items-center animate-in slide-in-from-left-2">
+                <div key={i} className="flex gap-3 items-center">
                   <div className="flex-1 relative">
                     <select 
-                      className="w-full pl-4 pr-10 py-3 rounded-2xl border-2 border-slate-100 focus:border-orange-500 outline-none text-sm font-bold bg-white appearance-none" 
+                      className="w-full pl-4 pr-10 py-3 rounded-2xl border-2 border-slate-100 outline-none text-sm font-bold bg-white appearance-none" 
                       value={p.methodId} 
                       onChange={e => {
                         const n = [...payments]; 
@@ -390,13 +364,11 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
                     >
                       {paymentMethods.map(m => <option key={m.id} value={m.id}>{m.icon} {m.name}</option>)}
                     </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">▼</div>
                   </div>
                   <div className="w-32 relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">R$</span>
                     <input 
                       type="number" 
-                      className="w-full pl-8 pr-3 py-3 rounded-2xl border-2 border-slate-100 focus:border-orange-500 outline-none text-sm font-black" 
+                      className="w-full px-3 py-3 rounded-2xl border-2 border-slate-100 outline-none text-sm font-black" 
                       value={p.amount} 
                       onChange={e => {
                         const n = [...payments]; 
@@ -407,42 +379,12 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
                   </div>
                 </div>
               ))}
-              <button 
-                onClick={() => setPayments([...payments, { methodId: paymentMethods[0].id, amount: 0 }])}
-                className="w-full py-2 border-2 border-dashed border-slate-200 rounded-xl text-[10px] font-black text-slate-400 uppercase hover:border-orange-300 hover:text-orange-500 transition-all"
-              >
-                + Adicionar Outro Pagamento (Misto)
-              </button>
+              <button onClick={() => setPayments([...payments, { methodId: paymentMethods[0].id, amount: 0 }])} className="w-full py-2 border-2 border-dashed border-slate-200 rounded-xl text-[10px] font-black text-slate-400 uppercase tracking-widest">+ Adicionar Pagamento</button>
             </div>
 
             <div className="flex flex-col gap-3">
-              <div className="flex justify-between items-center px-2">
-                <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Saldo Restante</span>
-                <span className={`text-sm font-black ${total - paidAmount > 0.01 ? 'text-red-500' : 'text-green-500'}`}>
-                  {total - paidAmount > 0.01 ? `Faltam R$ ${(total - paidAmount).toFixed(2)}` : 'Pago'}
-                </span>
-              </div>
-              
-              {paidAmount > total && (
-                <div className="bg-green-50 p-4 rounded-2xl border border-green-100 flex justify-between items-center">
-                  <span className="text-green-600 font-black text-xs uppercase">Troco ao Cliente:</span>
-                  <span className="text-xl font-black text-green-700">R$ {changeAmount.toFixed(2)}</span>
-                </div>
-              )}
-
-              <button 
-                disabled={paidAmount < total - 0.01}
-                onClick={handleFinalize} 
-                className={`w-full py-5 text-white rounded-[24px] font-black text-lg shadow-xl transition-all active:scale-95 disabled:opacity-50 disabled:grayscale ${editingSale ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-100' : 'bg-orange-600 hover:bg-orange-700 shadow-orange-100'}`}
-              >
-                {editingSale ? 'SALVAR ALTERAÇÕES' : 'CONCLUIR VENDA'}
-              </button>
-              <button 
-                onClick={() => setShowPaymentModal(false)} 
-                className="w-full py-3 text-slate-400 font-bold hover:text-slate-600 transition-colors"
-              >
-                VOLTAR
-              </button>
+              <button disabled={paidAmount < total - 0.01} onClick={handleFinalize} className="w-full py-5 bg-orange-600 text-white rounded-[24px] font-black text-lg disabled:opacity-50">CONCLUIR VENDA</button>
+              <button onClick={() => setShowPaymentModal(false)} className="w-full py-3 text-slate-400 font-bold">VOLTAR</button>
             </div>
           </div>
         </div>

@@ -8,6 +8,7 @@ export interface Product {
   category: string;
   stock: number;
   unitType: 'un' | 'kg'; // un = Unidade/Saco Fechado, kg = Peso/Granel
+  backgroundColor?: string; // Cor de fundo do card no PDV
 }
 
 export interface Customer {

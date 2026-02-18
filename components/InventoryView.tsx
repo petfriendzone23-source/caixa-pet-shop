@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Product } from '../types';
-import { CATEGORIES } from '../constants';
+import { CATEGORIES, PRODUCT_COLORS } from '../constants';
 
 interface InventoryViewProps {
   products: Product[];
@@ -22,11 +22,11 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
     costPrice: 0,
     price: 0,
     stock: 0,
-    unitType: 'un'
+    unitType: 'un',
+    backgroundColor: '#ffffff'
   });
 
   const generateBarcode = () => {
-    // Gera um código de barras de 13 dígitos aleatórios
     let barcode = '';
     for (let i = 0; i < 13; i++) {
       barcode += Math.floor(Math.random() * 10).toString();
@@ -56,7 +56,8 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
         costPrice: 0,
         price: 0,
         stock: 0,
-        unitType: 'un'
+        unitType: 'un',
+        backgroundColor: '#ffffff'
       });
     }
     setIsModalOpen(true);
@@ -78,7 +79,7 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
         <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
           <div>
             <h2 className="text-xl font-black text-slate-800">📦 Estoque e Catálogo</h2>
-            <p className="text-xs text-slate-500 mt-1">Gerencie produtos e códigos de barras</p>
+            <p className="text-xs text-slate-500 mt-1">Gerencie produtos e cores de identificação</p>
           </div>
           <button 
             onClick={() => openModal()}
@@ -92,9 +93,10 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
           <table className="w-full text-left">
             <thead className="bg-slate-50 text-slate-500 text-[10px] uppercase font-black tracking-widest border-b border-slate-100">
               <tr>
+                <th className="px-6 py-4">Cor</th>
                 <th className="px-6 py-4">Código / Barras</th>
                 <th className="px-6 py-4">Nome</th>
-                <th className="px-6 py-4">Venda</th>
+                <th className="px-6 py-4">Tipo</th>
                 <th className="px-6 py-4">Preço</th>
                 <th className="px-6 py-4">Estoque</th>
                 <th className="px-6 py-4 text-center">Ações</th>
@@ -103,6 +105,12 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
             <tbody className="divide-y divide-slate-100">
               {products.map(product => (
                 <tr key={product.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div 
+                      className="w-8 h-8 rounded-full border border-slate-200 shadow-sm" 
+                      style={{ backgroundColor: product.backgroundColor || '#ffffff' }}
+                    />
+                  </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col gap-1">
                       <span className="font-mono text-[10px] font-bold text-slate-400">
@@ -121,7 +129,7 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-0.5 text-[9px] font-black rounded-full uppercase ${product.unitType === 'kg' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
-                      {product.unitType === 'kg' ? 'POR PESO' : 'UNIDADE'}
+                      {product.unitType === 'kg' ? 'KG' : 'UN'}
                     </span>
                   </td>
                   <td className="px-6 py-4 font-black text-slate-900 text-sm">
@@ -147,13 +155,34 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden border border-slate-200">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh] border border-slate-200 custom-scrollbar">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 sticky top-0 z-10">
               <h3 className="text-xl font-black text-slate-900">{editingProduct ? '📝 Editar Item' : '✨ Novo Item'}</h3>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-900 text-2xl transition-colors">✕</button>
             </div>
             
-            <form onSubmit={handleSubmit} className="p-8 space-y-5">
+            <form onSubmit={handleSubmit} className="p-8 space-y-6">
+              {/* Seletor de Cores */}
+              <div>
+                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-3">Cor de Exibição no PDV</label>
+                <div className="flex flex-wrap gap-2">
+                  {PRODUCT_COLORS.map((color) => (
+                    <button
+                      key={color.hex}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, backgroundColor: color.hex })}
+                      className={`w-10 h-10 rounded-full border-2 transition-all ${
+                        formData.backgroundColor === color.hex 
+                          ? 'border-orange-500 scale-110 shadow-lg' 
+                          : 'border-slate-100 hover:border-slate-300'
+                      }`}
+                      style={{ backgroundColor: color.hex }}
+                      title={color.name}
+                    />
+                  ))}
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1">Tipo de Venda</label>
@@ -185,28 +214,9 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
                       value={formData.code}
                       onChange={e => setFormData({...formData, code: e.target.value})}
                     />
-                    <button 
-                      type="button" 
-                      onClick={generateBarcode} 
-                      className="px-3 bg-slate-900 text-white rounded-xl font-bold text-[10px] uppercase hover:bg-black transition-colors"
-                      title="Gerar Barcode Numérico"
-                    >
-                      Barcode
-                    </button>
-                    <button 
-                      type="button" 
-                      onClick={generateAutoCode} 
-                      className="px-3 bg-slate-100 rounded-xl font-bold text-[10px] uppercase"
-                      title="Gerar Código Alfanumérico"
-                    >
-                      Auto
-                    </button>
+                    <button type="button" onClick={generateBarcode} className="px-3 bg-slate-900 text-white rounded-xl font-bold text-[10px] uppercase">Barcode</button>
+                    <button type="button" onClick={generateAutoCode} className="px-3 bg-slate-100 rounded-xl font-bold text-[10px] uppercase">Auto</button>
                   </div>
-                  {formData.code && (
-                    <div className="mt-2 text-center bg-slate-50 p-2 rounded-lg border border-slate-100">
-                      <div className="barcode text-4xl">{formData.code}</div>
-                    </div>
-                  )}
                 </div>
 
                 <div className="col-span-2">
@@ -267,19 +277,8 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
               </div>
 
               <div className="pt-4 flex gap-3">
-                <button 
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="flex-1 px-4 py-3 rounded-xl border-2 border-slate-100 text-slate-500 font-bold hover:bg-slate-50 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button 
-                  type="submit"
-                  className="flex-1 px-4 py-3 rounded-xl bg-orange-600 text-white font-black hover:bg-orange-700 shadow-xl shadow-orange-100 transition-all active:scale-95"
-                >
-                  Salvar
-                </button>
+                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-4 py-3 rounded-xl border-2 border-slate-100 text-slate-500 font-bold">Cancelar</button>
+                <button type="submit" className="flex-1 px-4 py-3 rounded-xl bg-orange-600 text-white font-black hover:bg-orange-700 shadow-xl shadow-orange-100">Salvar</button>
               </div>
             </form>
           </div>
