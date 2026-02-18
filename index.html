@@ -6,8 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="NexusPet">
     <meta name="theme-color" content="#f97316">
     <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/620/620851.png">
+    
     <title>NexusPet - PDV Pet Shop</title>
     <script type="importmap">
 {
@@ -67,48 +70,45 @@
           size: auto; 
         }
         
-        /* Esconde tudo no root */
-        body * {
-          visibility: hidden;
+        /* Esconde absolutamente tudo no corpo */
+        body {
+          background-color: white !important;
+          color: black !important;
+          overflow: visible !important;
         }
 
-        /* Mostra apenas o container de impressão e seus filhos */
-        .print-container, .print-container * {
-          visibility: visible;
+        #root, aside, main, header, section {
+          display: none !important;
+          visibility: hidden !important;
         }
 
+        /* Força a visibilidade apenas do modal de recibo */
         .print-container {
+          display: block !important;
+          visibility: visible !important;
           position: absolute !important;
           left: 0 !important;
           top: 0 !important;
           width: 100% !important;
+          height: auto !important;
           margin: 0 !important;
-          padding: 5mm !important;
-          background-color: white !important;
-          color: black !important;
+          padding: 10mm !important;
+          background: white !important;
+          z-index: 999999 !important;
+        }
+
+        .print-container * {
           visibility: visible !important;
         }
 
-        /* Remove sombras e bordas arredondadas que gastam tinta/processamento */
-        .print-container {
-          box-shadow: none !important;
-          border: none !important;
-        }
-
-        /* Força fundo branco e texto preto */
-        body {
-          background-color: white !important;
-          overflow: visible !important;
-        }
-        
-        /* Remove botões e elementos desnecessários na impressão */
         .print-hidden, button {
           display: none !important;
+          visibility: hidden !important;
         }
       }
 
       #root:empty::before {
-        content: "🐾 NexusPet: Entrando...";
+        content: "🐾 NexusPet: Carregando PDV...";
         display: flex;
         position: fixed;
         inset: 0;
@@ -116,8 +116,21 @@
         justify-content: center;
         color: white;
         font-weight: bold;
+        background: #0f172a;
       }
     </style>
+    <script>
+      // Registro do Service Worker para suporte PWA/Offline
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').then(registration => {
+            console.log('NexusPet: Service Worker registrado com sucesso:', registration.scope);
+          }).catch(error => {
+            console.log('NexusPet: Falha ao registrar Service Worker:', error);
+          });
+        });
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

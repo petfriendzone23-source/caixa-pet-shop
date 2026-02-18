@@ -2,9 +2,10 @@
 {
   "name": "NexusPet - PDV Profissional",
   "short_name": "NexusPet",
-  "description": "Sistema de Gestão e PDV para Pet Shops",
+  "description": "Sistema de Gestão e PDV para Pet Shops e Estética Canina",
   "start_url": "/",
   "display": "standalone",
+  "orientation": "any",
   "background_color": "#0f172a",
   "theme_color": "#f97316",
   "icons": [
@@ -19,5 +20,6 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ]
+  ],
+  "categories": ["business", "productivity"]
 }
