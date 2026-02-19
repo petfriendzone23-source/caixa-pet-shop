@@ -83,33 +83,40 @@
       @media print {
         @page { margin: 0; size: auto; }
         body { background-color: white !important; color: black !important; overflow: visible !important; }
-        /* Oculta tudo, exceto o modal de recibo */
-        body > *:not(.fixed.inset-0.bg-slate-900\/80) { /* Seleciona tudo que não é o modal */
+        
+        /* Oculta toda a aplicação, exceto o modal de recibo */
+        body > #root > div:not(.fixed.inset-0.bg-slate-900\/80) {
           display: none !important;
           visibility: hidden !important;
         }
+
         /* Garante que o modal de recibo e seu conteúdo sejam visíveis */
-        .fixed.inset-0.bg-slate-900\/80 { /* O modal de recibo */
-          position: static !important; /* Remove o posicionamento fixo para impressão */
-          background-color: white !important; /* Fundo branco para impressão */
+        .fixed.inset-0.bg-slate-900\/80 {
+          position: static !important;
+          background-color: white !important;
           backdrop-filter: none !important;
           display: block !important;
           visibility: visible !important;
           width: 100% !important;
           height: auto !important;
           overflow: visible !important;
+          padding: 0 !important; /* Remove padding do modal externo */
         }
-        .fixed.inset-0.bg-slate-900\/80 .bg-white.rounded-2xl { /* O conteúdo interno do modal */
+
+        /* Ajustes para o conteúdo interno do modal */
+        .fixed.inset-0.bg-slate-900\/80 > div {
           box-shadow: none !important;
           border: none !important;
           width: 100% !important;
           max-width: none !important;
           border-radius: 0 !important;
         }
-        .fixed.inset-0.bg-slate-900\/80 .print\:p-0 { padding: 0 !important; }
-        .fixed.inset-0.bg-slate-900\/80 .print\:bg-white { background-color: white !important; }
-        .fixed.inset-0.bg-slate-900\/80 .print\:static { position: static !important; }
-        .fixed.inset-0.bg-slate-900\/80 .print\:inset-auto { inset: auto !important; }
+
+        /* Oculta os botões de ação do modal na impressão */
+        .fixed.inset-0.bg-slate-900\/80 .print\:hidden {
+          display: none !important;
+          visibility: hidden !important;
+        }
       }
 
       #root:empty::before {
