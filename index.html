@@ -86,6 +86,10 @@
           overflow: visible !important;
           background-color: white !important;
           color: black !important;
+          print-color-adjust: exact; /* Força a impressão de cores de fundo */
+          -webkit-print-color-adjust: exact;
+          text-rendering: optimizeLegibility;
+          -webkit-font-smoothing: antialiased;
         }
         @page { margin: 0; size: auto; }
 
@@ -123,6 +127,12 @@
           width: 100% !important;
           max-width: none !important;
           border-radius: 0 !important;
+        }
+
+        /* Otimização para o código de barras */
+        .barcode {
+          image-rendering: -webkit-optimize-contrast;
+          image-rendering: crisp-edges;
         }
 
         /* Oculta os botões de ação do modal na impressão */
