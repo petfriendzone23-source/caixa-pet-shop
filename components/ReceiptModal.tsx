@@ -22,7 +22,7 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ sale, companyInfo, onClose,
   return (
     <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4 print:p-0 print:bg-white print:static print:inset-auto">
       {/* O container principal ganha a classe 'print-container' referenciada no CSS global */}
-      <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden print:shadow-none print:w-full print:rounded-none print-container">
+      <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden print:shadow-none print:w-full print:rounded-none">
         <div className="p-8 print:p-4 font-mono-receipt">
           <div className="text-center mb-6 border-b border-dashed border-slate-300 pb-4">
             <h2 className="text-xl font-black text-slate-900 uppercase tracking-tighter">{companyInfo.name}</h2>

@@ -81,18 +81,25 @@
       }
 
       @media print {
+        html, body {
+          height: auto !important;
+          overflow: visible !important;
+          background-color: white !important;
+          color: black !important;
+        }
         @page { margin: 0; size: auto; }
-        body { background-color: white !important; color: black !important; overflow: visible !important; }
-        
-        /* Oculta toda a aplicação, exceto o modal de recibo */
-        body > #root > div:not(.fixed.inset-0.bg-slate-900\/80) {
+
+        /* Oculta a sidebar e o main content */
+        body > #root > div > aside, /* Sidebar */
+        body > #root > div > main /* Main content */
+        {
           display: none !important;
           visibility: hidden !important;
         }
 
-        /* Garante que o modal de recibo e seu conteúdo sejam visíveis */
+        /* Garante que o modal de recibo seja o único elemento visível e com estilos adequados para impressão */
         .fixed.inset-0.bg-slate-900\/80 {
-          position: static !important;
+          position: static !important; 
           background-color: white !important;
           backdrop-filter: none !important;
           display: block !important;
@@ -100,7 +107,13 @@
           width: 100% !important;
           height: auto !important;
           overflow: visible !important;
-          padding: 0 !important; /* Remove padding do modal externo */
+          padding: 0 !important; 
+          margin: 0 !important;
+          top: auto !important;
+          left: auto !important;
+          right: auto !important;
+          bottom: auto !important;
+          z-index: auto !important;
         }
 
         /* Ajustes para o conteúdo interno do modal */
