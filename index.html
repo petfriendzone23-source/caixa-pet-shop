@@ -120,6 +120,13 @@
           z-index: auto !important;
         }
 
+        .fixed.inset-0.bg-slate-900\/80 * {
+          color: black !important; /* Força todo o texto a ser preto */
+          text-shadow: none !important; /* Remove qualquer sombra de texto */
+          box-shadow: none !important; /* Remove qualquer sombra de caixa */
+          background-color: transparent !important; /* Garante fundo transparente para elementos internos */
+        }
+
         /* Ajustes para o conteúdo interno do modal */
         .fixed.inset-0.bg-slate-900\/80 > div {
           box-shadow: none !important;
@@ -133,6 +140,9 @@
         .barcode {
           image-rendering: -webkit-optimize-contrast;
           image-rendering: crisp-edges;
+          color: black !important; /* Garante que o código de barras seja preto */
+          -webkit-font-smoothing: antialiased; /* Suaviza a fonte do código de barras */
+          text-shadow: none !important; /* Remove sombra do código de barras */
         }
 
         /* Oculta os botões de ação do modal na impressão */
