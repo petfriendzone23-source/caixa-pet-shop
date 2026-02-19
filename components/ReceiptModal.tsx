@@ -14,6 +14,27 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ sale, companyInfo, onClose,
     window.print();
   };
 
+  const handlePrintFiscal = async () => {
+    try {
+      const response = await fetch('/api/print-fiscal-receipt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(sale),
+      });
+      const data = await response.json();
+      if (data.success) {
+        alert('Dados da venda enviados para a impressora fiscal!');
+      } else {
+        alert('Erro ao enviar dados para a impressora fiscal: ' + data.message);
+      }
+    } catch (error) {
+      console.error('Erro ao comunicar com o backend para impressão fiscal:', error);
+      alert('Erro de comunicação com o servidor de impressão fiscal.');
+    }
+  };
+
   const handleCancel = () => {
     onCancelSale(sale.id);
     onClose();
@@ -111,10 +132,10 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ sale, companyInfo, onClose,
               Fechar
             </button>
             <button 
-              onClick={handlePrint}
+              onClick={handlePrintFiscal}
               className="flex-1 px-4 py-3 rounded-xl bg-orange-600 text-white font-black text-xs uppercase hover:bg-orange-700 shadow-lg shadow-orange-100 transition-colors flex items-center justify-center gap-2"
             >
-              <span>🖨️</span> Imprimir
+              <span>🖨️</span> Imprimir Notinha Fiscal
             </button>
           </div>
           <button 
