@@ -24,6 +24,8 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
   const [payments, setPayments] = useState<{ methodId: string, amount: number }[]>([]);
   const [bulkModalProduct, setBulkModalProduct] = useState<Product | null>(null);
   const [bulkValue, setBulkValue] = useState<string>('');
+  const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
+  const [editingPriceValue, setEditingPriceValue] = useState<number>(0);
   const scannerRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -93,6 +95,19 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
   };
 
   const removeFromCart = (id: string) => setCart(prev => prev.filter(item => item.id !== id));
+
+  const startEditingPrice = (item: CartItem) => {
+    setEditingPriceId(item.id);
+    setEditingPriceValue(item.price);
+  };
+
+  const saveEditingPrice = (id: string) => {
+    setCart(prev => prev.map(item => 
+      item.id === id ? { ...item, price: editingPriceValue } : item
+    ));
+    setEditingPriceId(null);
+    setEditingPriceValue(0);
+  };
   
   const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const paidAmount = payments.reduce((sum, p) => sum + p.amount, 0);
@@ -264,8 +279,27 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
                   <p className="font-bold text-xs text-slate-800 dark:text-slate-200 truncate">{item.name}</p>
                   <div className="flex justify-between items-center mt-1">
                     <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
-                      {item.quantity.toFixed(item.unitType === 'kg' ? 3 : 0)} {item.unitType} x R${item.price.toFixed(2)}
+                      {item.quantity.toFixed(item.unitType === 'kg' ? 3 : 0)} {item.unitType}
                     </span>
+                    {editingPriceId === item.id ? (
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={editingPriceValue}
+                        onChange={e => setEditingPriceValue(parseFloat(e.target.value) || 0)}
+                        onBlur={() => saveEditingPrice(item.id)}
+                        onKeyDown={e => e.key === 'Enter' && saveEditingPrice(item.id)}
+                        className="w-20 px-1 py-0.5 rounded border border-orange-300 text-xs font-black text-slate-900 dark:text-white bg-white dark:bg-slate-800 text-right"
+                        autoFocus
+                      />
+                    ) : (
+                      <span 
+                        className="font-black text-slate-900 dark:text-white text-xs cursor-pointer hover:text-orange-500"
+                        onClick={() => startEditingPrice(item)}
+                      >
+                        R$ {item.price.toFixed(2)}
+                      </span>
+                    )}
                     <span className="font-black text-slate-900 dark:text-white text-xs">R$ {(item.price * item.quantity).toFixed(2)}</span>
                   </div>
                 </div>
