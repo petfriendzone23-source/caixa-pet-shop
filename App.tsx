@@ -207,13 +207,16 @@ const App: React.FC = () => {
       <Sidebar currentView={currentView} setView={setCurrentView} onLogout={handleLogout} />
       <main className="flex-1 flex flex-col min-w-0">
         <header className="flex justify-between items-center p-8 pb-4 print:hidden">
-          <div>
-            <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight uppercase">
-              {currentView === 'pos' ? 'PDV' : currentView === 'sales' ? 'Histórico' : currentView === 'inventory' ? 'Estoque' : currentView === 'customers' ? 'Clientes' : currentView === 'dashboard' ? 'Relatórios' : 'Configurações'}
-            </h2>
-            <div className="flex items-center gap-2 mt-1">
-              <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-orange-500'}`}></span>
-              <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{isOnline ? 'Online' : 'Modo Offline'}</p>
+          <div className="flex items-center gap-4">
+            <img src="/logo.svg" alt="NexusPet Logo" className="h-10" />
+            <div>
+              <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight uppercase">
+                {currentView === 'pos' ? 'PDV' : currentView === 'sales' ? 'Histórico' : currentView === 'inventory' ? 'Estoque' : currentView === 'customers' ? 'Clientes' : currentView === 'dashboard' ? 'Relatórios' : 'Configurações'}
+              </h2>
+              <div className="flex items-center gap-2 mt-1">
+                <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-orange-500'}`}></span>
+                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{isOnline ? 'Online' : 'Modo Offline'}</p>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-4">

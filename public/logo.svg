@@ -1,0 +1,9 @@
+<svg width="200" height="40" viewBox="0 0 200 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="200" height="40" fill="white"/>
+  <path d="M20 20C20 14.4772 24.4772 10 30 10C35.5228 10 40 14.4772 40 20C40 25.5228 35.5228 30 30 30C24.4772 30 20 25.5228 20 20Z" fill="#FF6321"/>
+  <path d="M30 10C30 8.34315 31.3431 7 33 7C34.6569 7 36 8.34315 36 10C36 11.6569 34.6569 13 33 13C31.3431 13 30 11.6569 30 10Z" fill="#FF6321"/>
+  <path d="M24 12C24 10.3431 25.3431 9 27 9C28.6569 9 30 10.3431 30 12C30 13.6569 28.6569 15 27 15C25.3431 15 24 13.6569 24 12Z" fill="#FF6321"/>
+  <path d="M36 12C36 10.3431 37.3431 9 39 9C40.6569 9 42 10.3431 42 12C42 13.6569 40.6569 15 39 15C37.3431 15 36 13.6569 36 12Z" fill="#FF6321"/>
+  <text x="50" y="26" font-family="Inter, sans-serif" font-weight="700" font-size="20" fill="#1E293B">Nexus</text>
+  <text x="115" y="26" font-family="Inter, sans-serif" font-weight="400" font-size="20" fill="#FF6321">Pet</text>
+</svg>

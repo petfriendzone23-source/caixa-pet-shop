@@ -13,13 +13,14 @@ export const INITIAL_PRODUCTS: Product[] = [
   { id: 's1', code: 'SRV001', name: 'Banho - Porte Pequeno', subgroup: 'Serviço', costPrice: 15.00, price: 50.00, category: 'Serviços', stock: 999, unitType: 'un', backgroundColor: '#f3e8ff' },
 ];
 
-export const CATEGORIES = ['Todos', 'Ração', 'Sache', 'Cama', 'Acessórios', 'Vestuário', 'Higiene', 'Saúde', 'Serviços'];
+export const CATEGORIES = ['Todos', 'Ração', 'Sache', 'Cama', 'Acessórios', 'Vestuário', 'Higiene', 'Saúde', 'Serviços', 'Passarinho'];
 
 export const SUBGROUPS_RACAO = [
   'SPECIAL DOG', 
   'SNOW CAT', 
   'PANELAÇO', 
-  'GOLDEN'
+  'GOLDEN',
+  'BANHO E TOSA'
 ];
 
 export const PRODUCT_COLORS = [

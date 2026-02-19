@@ -13,6 +13,7 @@ interface InventoryViewProps {
 const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, onSaveProduct, onDeleteProduct }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const [formData, setFormData] = useState<Product>({
     id: '',
@@ -26,6 +27,13 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
     unitType: 'un',
     backgroundColor: '#ffffff'
   });
+
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.subgroup?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const generateBarcode = () => {
     let barcode = '';
@@ -83,12 +91,21 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
             <h2 className="text-xl font-black text-slate-800">📦 Estoque e Catálogo</h2>
             <p className="text-xs text-slate-500 mt-1">Gerencie produtos e subgrupos de marcas</p>
           </div>
-          <button 
-            onClick={() => openModal()}
-            className="bg-orange-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-orange-700 transition-all shadow-lg shadow-orange-100 flex items-center gap-2"
-          >
-            <span className="text-xl">+</span> Novo Item
-          </button>
+          <div className="flex items-center gap-4">
+            <input 
+              type="text" 
+              placeholder="Buscar item..." 
+              className="px-4 py-2.5 rounded-xl border-2 border-slate-100 focus:border-orange-500 outline-none text-sm"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+            <button 
+              onClick={() => openModal()}
+              className="bg-orange-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-orange-700 transition-all shadow-lg shadow-orange-100 flex items-center gap-2"
+            >
+              <span className="text-xl">+</span> Novo Item
+            </button>
+          </div>
         </div>
         
         <div className="overflow-x-auto">
@@ -105,7 +122,7 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {products.map(product => (
+              {filteredProducts.map(product => (
                 <tr key={product.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-4">
                     <div 
