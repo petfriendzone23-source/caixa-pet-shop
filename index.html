@@ -132,9 +132,10 @@
           box-shadow: none !important;
           border: none !important;
           width: 100% !important;
-          max-width: 210px !important; /* Aproximadamente 58mm */
+          max-width: 190px !important; /* Reduzido para dar mais espaço nas bordas (aprox. 58mm) */
           margin: 0 auto !important; /* Centraliza o recibo */
           border-radius: 0 !important;
+          box-sizing: border-box !important; /* Garante que padding e borda sejam incluídos na largura */
         }
 
         /* Otimização para o código de barras */
