@@ -14,6 +14,8 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [productsPerPage] = useState(10); // 10 produtos por página
 
   const [formData, setFormData] = useState<Product>({
     id: '',
@@ -34,6 +36,14 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
     product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.subgroup?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Lógica de paginação
+  const indexOfLastProduct = currentPage * productsPerPage;
+  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+  const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
+  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   const generateBarcode = () => {
     let barcode = '';
@@ -122,7 +132,7 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredProducts.map(product => (
+              {currentProducts.map(product => (
                 <tr key={product.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-4">
                     <div 
@@ -179,6 +189,29 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
             </tbody>
           </table>
         </div>
+
+        {/* Controles de Paginação */}
+        {totalPages > 1 && (
+          <div className="p-6 flex justify-between items-center bg-slate-50/50 border-t border-slate-100">
+            <button
+              onClick={() => paginate(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs uppercase hover:bg-slate-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              ← Anterior
+            </button>
+            <span className="text-sm text-slate-600">
+              Página {currentPage} de {totalPages}
+            </span>
+            <button
+              onClick={() => paginate(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs uppercase hover:bg-slate-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Próximo →
+            </button>
+          </div>
+        )}
       </div>
 
       {isModalOpen && (
