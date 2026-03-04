@@ -31,6 +31,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout }) => 
 
   const menuItems: { id: View; label: string; icon: string }[] = [
     { id: 'pos', label: 'Venda (PDV)', icon: '🛒' },
+    { id: 'storefront', label: 'Frente de Loja', icon: '📺' },
     { id: 'sales', label: 'Histórico', icon: '📜' },
     { id: 'inventory', label: 'Estoque', icon: '📦' },
     { id: 'customers', label: 'Clientes', icon: '👥' },

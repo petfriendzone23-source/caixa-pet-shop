@@ -55,4 +55,4 @@ export interface Sale {
   customerName?: string;
 }
 
-export type View = 'pos' | 'inventory' | 'dashboard' | 'settings' | 'customers' | 'sales';
+export type View = 'pos' | 'inventory' | 'dashboard' | 'settings' | 'customers' | 'sales' | 'storefront';

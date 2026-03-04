@@ -11,6 +11,7 @@ import CustomerView from './components/CustomerView.tsx';
 import SalesHistoryView from './components/SalesHistoryView.tsx';
 import ReceiptModal from './components/ReceiptModal.tsx';
 import LoginView from './components/LoginView.tsx';
+import StorefrontView from './components/StorefrontView.tsx';
 
 const DEFAULT_PAYMENTS: PaymentMethod[] = [
   { id: 'p1', name: 'Dinheiro', icon: '💵', feePercent: 0 },
@@ -184,6 +185,7 @@ const App: React.FC = () => {
       case 'inventory': return <InventoryView products={products} onUpdateStock={(id, s) => setProducts(products.map(p => p.id === id ? {...p, stock: s} : p))} onSaveProduct={(p) => setProducts(products.find(x => x.id === p.id) ? products.map(x => x.id === p.id ? p : x) : [p, ...products])} onDeleteProduct={(id) => setProducts(products.filter(p => p.id !== id))} />;
       case 'customers': return <CustomerView customers={customers} onSaveCustomer={(c) => setCustomers(customers.find(x => x.id === c.id) ? customers.map(x => x.id === c.id ? c : x) : [c, ...customers])} onDeleteCustomer={(id) => setCustomers(customers.filter(c => c.id !== id))} />;
       case 'dashboard': return <DashboardView sales={sales} />;
+      case 'storefront': return <StorefrontView />;
       case 'settings': return <SettingsView 
         paymentMethods={paymentMethods} 
         companyInfo={companyInfo} 
