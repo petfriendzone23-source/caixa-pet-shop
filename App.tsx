@@ -172,6 +172,7 @@ const App: React.FC = () => {
         customers={customers} 
         nextSaleNumber={nextSaleNumber} 
         onCompleteSale={handleCompleteSale} 
+        onReorderProducts={setProducts}
         editingSale={editingSale} 
         onCancelEdit={() => setEditingSale(null)} 
         onDeleteSale={handleCancelSale}

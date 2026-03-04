@@ -2,6 +2,99 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Product, CartItem, Sale, PaymentMethod, PaymentEntry, Customer } from '../types.ts';
 import { CATEGORIES } from '../constants.ts';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  rectSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+interface SortableProductCardProps {
+  product: Product;
+  effectiveStock: number;
+  outOfStock: boolean;
+  onClick: () => void;
+}
+
+const SortableProductCard: React.FC<SortableProductCardProps> = ({ product, effectiveStock, outOfStock, onClick }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: product.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    backgroundColor: product.backgroundColor || '#ffffff',
+    zIndex: isDragging ? 50 : 'auto',
+    opacity: isDragging ? 0.5 : outOfStock ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      onClick={(e) => {
+        // Prevent click if we were dragging
+        if (transform && (Math.abs(transform.x) > 5 || Math.abs(transform.y) > 5)) {
+          return;
+        }
+        if (!outOfStock) onClick();
+      }}
+      className={`group relative p-4 rounded-2xl border-2 transition-all flex flex-col justify-between h-36 ${
+        outOfStock 
+          ? 'grayscale cursor-not-allowed border-slate-100 dark:border-slate-800' 
+          : 'hover:border-orange-500 cursor-grab active:cursor-grabbing border-transparent shadow-sm hover:shadow-md'
+      }`}
+    >
+      <div className="dark:mix-blend-multiply opacity-90 pointer-events-none">
+        <div className="flex justify-between items-start mb-1">
+          <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{product.code}</span>
+          <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase ${product.unitType === 'kg' ? 'bg-green-100/50 text-green-700' : 'bg-blue-100/50 text-blue-700'}`}>
+            {product.unitType}
+          </span>
+        </div>
+        <h3 className="font-bold text-xs leading-tight text-slate-800 line-clamp-1">{product.name}</h3>
+        {product.subgroup && (
+          <p className="text-[9px] font-black text-orange-500 uppercase mt-1 tracking-wider">{product.subgroup}</p>
+        )}
+      </div>
+      
+      <div className="flex justify-between items-end mt-2 dark:mix-blend-multiply opacity-90 pointer-events-none">
+        <p className="font-black text-slate-900 text-sm">R$ {product.price.toFixed(2)}</p>
+        {product.category !== 'Serviços' && (
+          <span className={`text-[9px] font-bold ${effectiveStock < 5 ? 'text-red-500' : 'text-slate-400'}`}>
+            Est: {effectiveStock.toFixed(product.unitType === 'kg' ? 1 : 0)}
+          </span>
+        )}
+      </div>
+
+      {outOfStock && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/40 dark:bg-black/40 rounded-2xl pointer-events-none">
+          <span className="bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg">SEM ESTOQUE</span>
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface POSViewProps {
   products: Product[];
@@ -9,12 +102,13 @@ interface POSViewProps {
   customers: Customer[];
   nextSaleNumber: number;
   onCompleteSale: (sale: Sale) => void;
+  onReorderProducts: (newProducts: Product[]) => void;
   editingSale?: Sale | null;
   onCancelEdit?: () => void;
   onDeleteSale?: (saleId: string) => void;
 }
 
-const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, nextSaleNumber, onCompleteSale, editingSale, onCancelEdit, onDeleteSale }) => {
+const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, nextSaleNumber, onCompleteSale, onReorderProducts, editingSale, onCancelEdit, onDeleteSale }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [filter, setFilter] = useState('Todos');
   const [search, setSearch] = useState('');
@@ -27,6 +121,29 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
   const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
   const [editingPriceValue, setEditingPriceValue] = useState<number>(0);
   const scannerRef = useRef<HTMLInputElement>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = products.findIndex((p) => p.id === active.id);
+      const newIndex = products.findIndex((p) => p.id === over.id);
+
+      const newProducts = arrayMove(products, oldIndex, newIndex);
+      onReorderProducts(newProducts);
+    }
+  };
 
   useEffect(() => {
     if (editingSale) {
@@ -190,50 +307,34 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 overflow-y-auto pr-2 custom-scrollbar">
-          {filteredProducts.map(p => {
-            const originalQty = editingSale?.items.find(i => i.id === p.id)?.quantity || 0;
-            const effectiveStock = p.category === 'Serviços' ? 999 : p.stock + originalQty;
-            const outOfStock = p.category !== 'Serviços' && effectiveStock <= 0;
-            
-            return (
-              <div 
-                key={p.id} 
-                onClick={() => !outOfStock && handleProductClick(p)} 
-                className={`group relative p-4 rounded-2xl border-2 transition-all flex flex-col justify-between h-36 ${outOfStock ? 'opacity-50 grayscale cursor-not-allowed border-slate-100 dark:border-slate-800' : 'hover:border-orange-500 cursor-pointer border-transparent shadow-sm hover:shadow-md'}`}
-                style={{ backgroundColor: p.backgroundColor || '#ffffff' }}
-              >
-                <div className="dark:mix-blend-multiply opacity-90">
-                  <div className="flex justify-between items-start mb-1">
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{p.code}</span>
-                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase ${p.unitType === 'kg' ? 'bg-green-100/50 text-green-700' : 'bg-blue-100/50 text-blue-700'}`}>
-                      {p.unitType}
-                    </span>
-                  </div>
-                  <h3 className="font-bold text-xs leading-tight text-slate-800 line-clamp-1">{p.name}</h3>
-                  {p.subgroup && (
-                    <p className="text-[9px] font-black text-orange-500 uppercase mt-1 tracking-wider">{p.subgroup}</p>
-                  )}
-                </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 overflow-y-auto pr-2 custom-scrollbar">
+            <SortableContext
+              items={filteredProducts.map(p => p.id)}
+              strategy={rectSortingStrategy}
+            >
+              {filteredProducts.map(p => {
+                const originalQty = editingSale?.items.find(i => i.id === p.id)?.quantity || 0;
+                const effectiveStock = p.category === 'Serviços' ? 999 : p.stock + originalQty;
+                const outOfStock = p.category !== 'Serviços' && effectiveStock <= 0;
                 
-                <div className="flex justify-between items-end mt-2 dark:mix-blend-multiply opacity-90">
-                  <p className="font-black text-slate-900 text-sm">R$ {p.price.toFixed(2)}</p>
-                  {p.category !== 'Serviços' && (
-                    <span className={`text-[9px] font-bold ${effectiveStock < 5 ? 'text-red-500' : 'text-slate-400'}`}>
-                      Est: {effectiveStock.toFixed(p.unitType === 'kg' ? 1 : 0)}
-                    </span>
-                  )}
-                </div>
-
-                {outOfStock && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-white/40 dark:bg-black/40 rounded-2xl">
-                    <span className="bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg">SEM ESTOQUE</span>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                return (
+                  <SortableProductCard
+                    key={p.id}
+                    product={p}
+                    effectiveStock={effectiveStock}
+                    outOfStock={outOfStock}
+                    onClick={() => handleProductClick(p)}
+                  />
+                );
+              })}
+            </SortableContext>
+          </div>
+        </DndContext>
       </div>
 
       <div className="w-96 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-col shadow-xl overflow-hidden transition-colors">
