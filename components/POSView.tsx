@@ -52,6 +52,7 @@ const SortableProductCard: React.FC<SortableProductCardProps> = ({ product, effe
       style={style}
       {...attributes}
       {...listeners}
+      title={product.name}
       onClick={(e) => {
         // Prevent click if we were dragging
         if (transform && (Math.abs(transform.x) > 5 || Math.abs(transform.y) > 5)) {
@@ -65,20 +66,20 @@ const SortableProductCard: React.FC<SortableProductCardProps> = ({ product, effe
           : 'hover:border-orange-500 cursor-grab active:cursor-grabbing border-transparent shadow-sm hover:shadow-md'
       }`}
     >
-      <div className="dark:mix-blend-multiply opacity-90 pointer-events-none">
+      <div className="dark:mix-blend-multiply opacity-90">
         <div className="flex justify-between items-start mb-1">
           <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{product.code}</span>
           <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase ${product.unitType === 'kg' ? 'bg-green-100/50 text-green-700' : 'bg-blue-100/50 text-blue-700'}`}>
             {product.unitType}
           </span>
         </div>
-        <h3 className="font-bold text-xs leading-tight text-slate-800 line-clamp-1" title={product.name}>{product.name}</h3>
+        <h3 className="font-bold text-xs leading-tight text-slate-800 line-clamp-1">{product.name}</h3>
         {product.subgroup && (
           <p className="text-[9px] font-black text-orange-500 uppercase mt-1 tracking-wider">{product.subgroup}</p>
         )}
       </div>
       
-      <div className="flex justify-between items-end mt-2 dark:mix-blend-multiply opacity-90 pointer-events-none">
+      <div className="flex justify-between items-end mt-2 dark:mix-blend-multiply opacity-90">
         <p className="font-black text-slate-900 text-sm">R$ {product.price.toFixed(2)}</p>
         {product.category !== 'Serviços' && (
           <span className={`text-[9px] font-bold ${effectiveStock < 5 ? 'text-red-500' : 'text-slate-400'}`}>
