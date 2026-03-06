@@ -191,7 +191,7 @@ const App: React.FC = () => {
       case 'inventory': return <InventoryView products={products} onUpdateStock={(id, s) => setProducts(products.map(p => p.id === id ? {...p, stock: s} : p))} onSaveProduct={(p) => setProducts(products.find(x => x.id === p.id) ? products.map(x => x.id === p.id ? p : x) : [p, ...products])} onDeleteProduct={(id) => setProducts(products.filter(p => p.id !== id))} />;
       case 'customers': return <CustomerView customers={customers} onSaveCustomer={(c) => setCustomers(customers.find(x => x.id === c.id) ? customers.map(x => x.id === c.id ? c : x) : [c, ...customers])} onDeleteCustomer={(id) => setCustomers(customers.filter(c => c.id !== id))} />;
       case 'dashboard': return <DashboardView sales={sales} />;
-      case 'storefront': return <StorefrontView />;
+      case 'storefront': return <StorefrontView onEnterSystem={() => setCurrentView('pos')} />;
       case 'settings': return <SettingsView 
         paymentMethods={paymentMethods} 
         companyInfo={companyInfo} 
@@ -209,6 +209,14 @@ const App: React.FC = () => {
   };
 
   if (!isAuthenticated) return <LoginView onLogin={handleLogin} />;
+
+  if (currentView === 'storefront') {
+    return (
+      <div className="h-screen w-screen overflow-hidden bg-slate-950">
+        <StorefrontView onEnterSystem={() => setCurrentView('pos')} />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors duration-500">
