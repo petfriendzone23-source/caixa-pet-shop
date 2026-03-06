@@ -43,6 +43,7 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>('pos');
   const [lastSale, setLastSale] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => localStorage.getItem('nxpet_sidebar_collapsed') === 'true');
 
   // Sincroniza a classe 'dark' no elemento <html> (necessário para Tailwind darkMode: 'class')
   useEffect(() => {
@@ -53,6 +54,10 @@ const App: React.FC = () => {
     }
     localStorage.setItem('nxpet_dark_mode', isDarkMode.toString());
   }, [isDarkMode]);
+
+  useEffect(() => {
+    localStorage.setItem('nxpet_sidebar_collapsed', isSidebarCollapsed.toString());
+  }, [isSidebarCollapsed]);
 
   useEffect(() => {
     document.documentElement.style.fontSize = `${uiScale * 16}px`;
@@ -207,7 +212,13 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors duration-500">
-      <Sidebar currentView={currentView} setView={setCurrentView} onLogout={handleLogout} />
+      <Sidebar 
+        currentView={currentView} 
+        setView={setCurrentView} 
+        onLogout={handleLogout} 
+        isCollapsed={isSidebarCollapsed}
+        setIsCollapsed={setIsSidebarCollapsed}
+      />
       <main className="flex-1 flex flex-col min-w-0">
         <header className="flex justify-between items-center p-8 pb-4 print:hidden">
           <div className="flex items-center gap-4">
