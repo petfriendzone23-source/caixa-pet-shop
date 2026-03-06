@@ -72,7 +72,7 @@ const SortableProductCard: React.FC<SortableProductCardProps> = ({ product, effe
             {product.unitType}
           </span>
         </div>
-        <h3 className="font-bold text-xs leading-tight text-slate-800 line-clamp-1">{product.name}</h3>
+        <h3 className="font-bold text-xs leading-tight text-slate-800 line-clamp-1" title={product.name}>{product.name}</h3>
         {product.subgroup && (
           <p className="text-[9px] font-black text-orange-500 uppercase mt-1 tracking-wider">{product.subgroup}</p>
         )}
