@@ -188,7 +188,7 @@ const App: React.FC = () => {
         onEditSale={(s) => { setEditingSale(s); setCurrentView('pos'); }} 
         onCancelSale={handleCancelSale}
       />;
-      case 'inventory': return <InventoryView products={products} onUpdateStock={(id, s) => setProducts(products.map(p => p.id === id ? {...p, stock: s} : p))} onSaveProduct={(p) => setProducts(products.find(x => x.id === p.id) ? products.map(x => x.id === p.id ? p : x) : [p, ...products])} onDeleteProduct={(id) => setProducts(products.filter(p => p.id !== id))} />;
+      case 'inventory': return <InventoryView products={products} sales={sales} onUpdateStock={(id, s) => setProducts(products.map(p => p.id === id ? {...p, stock: s} : p))} onSaveProduct={(p) => setProducts(products.find(x => x.id === p.id) ? products.map(x => x.id === p.id ? p : x) : [p, ...products])} onDeleteProduct={(id) => setProducts(products.filter(p => p.id !== id))} />;
       case 'customers': return <CustomerView customers={customers} onSaveCustomer={(c) => setCustomers(customers.find(x => x.id === c.id) ? customers.map(x => x.id === c.id ? c : x) : [c, ...customers])} onDeleteCustomer={(id) => setCustomers(customers.filter(c => c.id !== id))} />;
       case 'dashboard': return <DashboardView sales={sales} />;
       case 'storefront': return <StorefrontView onEnterSystem={() => setCurrentView('pos')} />;

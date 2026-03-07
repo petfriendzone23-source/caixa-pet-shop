@@ -1,18 +1,21 @@
 
 import React, { useState } from 'react';
-import { Product } from '../types';
+import { Product, Sale } from '../types';
 import { CATEGORIES, PRODUCT_COLORS, SUBGROUPS_RACAO } from '../constants';
 
 interface InventoryViewProps {
   products: Product[];
+  sales: Sale[];
   onUpdateStock: (id: string, newStock: number) => void;
   onSaveProduct: (product: Product) => void;
   onDeleteProduct: (id: string) => void;
 }
 
-const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, onSaveProduct, onDeleteProduct }) => {
+const InventoryView: React.FC<InventoryViewProps> = ({ products, sales, onUpdateStock, onSaveProduct, onDeleteProduct }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [selectedProductHistory, setSelectedProductHistory] = useState<{ product: Product, history: any[] } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(10); // 10 produtos por página
@@ -81,6 +84,25 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
       });
     }
     setIsModalOpen(true);
+  };
+
+  const openHistoryModal = (product: Product) => {
+    const history = sales
+      .filter(sale => sale.items.some(item => item.id === product.id))
+      .map(sale => {
+        const item = sale.items.find(i => i.id === product.id);
+        return {
+          saleId: sale.id,
+          date: sale.timestamp,
+          quantity: item?.quantity || 0,
+          price: item?.price || 0,
+          total: (item?.quantity || 0) * (item?.price || 0)
+        };
+      })
+      .sort((a, b) => b.date - a.date);
+
+    setSelectedProductHistory({ product, history });
+    setIsHistoryModalOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -180,8 +202,9 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex justify-center gap-1">
-                      <button onClick={() => openModal(product)} className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors">✏️</button>
-                      <button onClick={() => onDeleteProduct(product.id)} className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-colors">🗑️</button>
+                      <button onClick={() => openHistoryModal(product)} className="p-2 hover:bg-purple-50 text-purple-600 rounded-lg transition-colors" title="Histórico de Vendas">📜</button>
+                      <button onClick={() => openModal(product)} className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors" title="Editar">✏️</button>
+                      <button onClick={() => onDeleteProduct(product.id)} className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-colors" title="Excluir">🗑️</button>
                     </div>
                   </td>
                 </tr>
@@ -213,6 +236,81 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, onUpdateStock, 
           </div>
         )}
       </div>
+
+      {isHistoryModalOpen && selectedProductHistory && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden border border-slate-200 flex flex-col max-h-[80vh]">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <div>
+                <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
+                  📜 Histórico de Vendas
+                </h3>
+                <p className="text-sm text-slate-500 font-medium mt-1">
+                  Produto: <span className="text-orange-600 font-bold">{selectedProductHistory.product.name}</span>
+                </p>
+              </div>
+              <button onClick={() => setIsHistoryModalOpen(false)} className="text-slate-400 hover:text-slate-900 text-2xl transition-colors">✕</button>
+            </div>
+            
+            <div className="overflow-y-auto p-0 flex-1 custom-scrollbar">
+              {selectedProductHistory.history.length === 0 ? (
+                <div className="p-12 text-center text-slate-400">
+                  <p className="text-4xl mb-4">📭</p>
+                  <p className="font-bold uppercase tracking-widest text-xs">Nenhuma venda registrada para este item</p>
+                </div>
+              ) : (
+                <table className="w-full text-left">
+                  <thead className="bg-slate-50 text-slate-500 text-[10px] uppercase font-black tracking-widest border-b border-slate-100 sticky top-0">
+                    <tr>
+                      <th className="px-6 py-4">Data / Hora</th>
+                      <th className="px-6 py-4">Nota (ID)</th>
+                      <th className="px-6 py-4 text-right">Qtd. Vendida</th>
+                      <th className="px-6 py-4 text-right">Preço Un.</th>
+                      <th className="px-6 py-4 text-right">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {selectedProductHistory.history.map((record, index) => (
+                      <tr key={index} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col">
+                            <span className="font-bold text-slate-800 text-xs">
+                              {new Date(record.date).toLocaleDateString('pt-BR')}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-mono">
+                              {new Date(record.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="font-mono text-xs font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded">
+                            #{record.saleId}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right font-bold text-slate-700">
+                          {record.quantity} {selectedProductHistory.product.unitType}
+                        </td>
+                        <td className="px-6 py-4 text-right text-xs text-slate-500">
+                          R$ {record.price.toFixed(2)}
+                        </td>
+                        <td className="px-6 py-4 text-right font-black text-slate-900">
+                          R$ {record.total.toFixed(2)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+            
+            <div className="p-4 border-t border-slate-100 bg-slate-50 text-right">
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                Total Vendido: <span className="text-slate-900 text-sm ml-2">{selectedProductHistory.history.reduce((acc, curr) => acc + curr.quantity, 0).toFixed(2)} {selectedProductHistory.product.unitType}</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
