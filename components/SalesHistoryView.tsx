@@ -14,13 +14,20 @@ const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({ sales, onOpenReceip
   const [search, setSearch] = useState('');
 
   const filteredSales = useMemo(() => {
+    const searchTerm = search.trim().toLowerCase();
+    
     return sales.filter(sale => {
       const saleDate = new Date(sale.timestamp).toISOString().split('T')[0];
-      const matchesDate = !filterDate || saleDate === filterDate;
-      const matchesSearch = sale.id.toLowerCase().includes(search.toLowerCase()) || 
-                           (sale.customerName?.toLowerCase().includes(search.toLowerCase()));
+      const matchesSearch = sale.id.toLowerCase().includes(searchTerm) || 
+                           (sale.customerName?.toLowerCase().includes(searchTerm));
       
-      return matchesDate && matchesSearch;
+      // Se houver busca (código ou nome), ignora o filtro de data para procurar em todo o histórico
+      if (searchTerm) {
+        return matchesSearch;
+      }
+
+      const matchesDate = !filterDate || saleDate === filterDate;
+      return matchesDate;
     });
   }, [sales, filterDate, search]);
 
