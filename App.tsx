@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Product, Sale, View, PaymentMethod, Customer, CompanyInfo } from './types.ts';
+import { Product, Sale, View, PaymentMethod, Customer, CompanyInfo, Debt, DebtPayment } from './types.ts';
 import { INITIAL_PRODUCTS } from './constants.ts';
 import Sidebar from './components/Sidebar.tsx';
 import POSView from './components/POSView.tsx';
@@ -9,6 +9,7 @@ import DashboardView from './components/DashboardView.tsx';
 import SettingsView from './components/SettingsView.tsx';
 import CustomerView from './components/CustomerView.tsx';
 import SalesHistoryView from './components/SalesHistoryView.tsx';
+import ReceivablesView from './components/ReceivablesView.tsx';
 import ReceiptModal from './components/ReceiptModal.tsx';
 import LoginView from './components/LoginView.tsx';
 import StorefrontView from './components/StorefrontView.tsx';
@@ -38,6 +39,7 @@ const App: React.FC = () => {
   const [sales, setSales] = useState<Sale[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [debts, setDebts] = useState<Debt[]>([]);
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo>(DEFAULT_COMPANY);
   const [nextSaleNumber, setNextSaleNumber] = useState<number>(1);
   const [currentView, setCurrentView] = useState<View>('pos');
@@ -96,6 +98,7 @@ const App: React.FC = () => {
     
     setPaymentMethods(load('nxpet_payments', DEFAULT_PAYMENTS));
     setCustomers(load('nxpet_customers', []));
+    setDebts(load('nxpet_debts', []));
     setCompanyInfo(load('nxpet_company', DEFAULT_COMPANY));
   }, []);
 
@@ -105,6 +108,7 @@ const App: React.FC = () => {
       localStorage.setItem('nxpet_sales', JSON.stringify(sales));
       localStorage.setItem('nxpet_payments', JSON.stringify(paymentMethods));
       localStorage.setItem('nxpet_customers', JSON.stringify(customers));
+      localStorage.setItem('nxpet_debts', JSON.stringify(debts));
       localStorage.setItem('nxpet_company', JSON.stringify(companyInfo));
       localStorage.setItem('nxpet_next_sale_number', nextSaleNumber.toString());
     }
@@ -141,6 +145,22 @@ const App: React.FC = () => {
 
     setLastSale(sale);
     setEditingSale(null);
+
+    // Se for venda fiado, cria um débito
+    if (sale.isCreditSale && sale.customerId) {
+      const newDebt: Debt = {
+        id: Math.random().toString(36).substr(2, 9),
+        saleId: sale.id,
+        customerId: sale.customerId,
+        customerName: sale.customerName || 'Cliente',
+        totalAmount: sale.total,
+        remainingAmount: sale.total,
+        status: 'pending',
+        createdAt: Date.now(),
+        payments: []
+      };
+      setDebts(prev => [newDebt, ...prev]);
+    }
   };
 
   const handleCancelSale = (saleId: string) => {
@@ -160,6 +180,9 @@ const App: React.FC = () => {
       // Remove a venda
       setSales(prev => prev.filter(s => s.id !== saleId));
       
+      // Remove débito associado se existir
+      setDebts(prev => prev.filter(d => d.saleId !== saleId));
+      
       if (editingSale?.id === saleId) {
         setEditingSale(null);
         setCurrentView('sales');
@@ -167,6 +190,21 @@ const App: React.FC = () => {
       
       alert(`Venda ${saleId} cancelada com sucesso.`);
     }
+  };
+
+  const handlePayDebt = (debtId: string, payment: DebtPayment) => {
+    setDebts(prev => prev.map(d => {
+      if (d.id === debtId) {
+        const newRemaining = Math.max(0, d.remainingAmount - payment.amount);
+        return {
+          ...d,
+          remainingAmount: newRemaining,
+          status: newRemaining === 0 ? 'paid' : 'pending',
+          payments: [...d.payments, payment]
+        };
+      }
+      return d;
+    }));
   };
 
   const renderView = () => {
@@ -191,6 +229,7 @@ const App: React.FC = () => {
       case 'inventory': return <InventoryView products={products} sales={sales} onUpdateStock={(id, s) => setProducts(products.map(p => p.id === id ? {...p, stock: s} : p))} onSaveProduct={(p) => setProducts(products.find(x => x.id === p.id) ? products.map(x => x.id === p.id ? p : x) : [p, ...products])} onDeleteProduct={(id) => setProducts(products.filter(p => p.id !== id))} />;
       case 'customers': return <CustomerView customers={customers} onSaveCustomer={(c) => setCustomers(customers.find(x => x.id === c.id) ? customers.map(x => x.id === c.id ? c : x) : [c, ...customers])} onDeleteCustomer={(id) => setCustomers(customers.filter(c => c.id !== id))} />;
       case 'dashboard': return <DashboardView sales={sales} />;
+      case 'receivables': return <ReceivablesView debts={debts} onPayDebt={handlePayDebt} onDeleteDebt={(id) => setDebts(debts.filter(d => d.id !== id))} />;
       case 'storefront': return <StorefrontView onEnterSystem={() => setCurrentView('pos')} />;
       case 'settings': return <SettingsView 
         paymentMethods={paymentMethods} 
@@ -233,7 +272,7 @@ const App: React.FC = () => {
             <img src="/logo.svg" alt="NexusPet Logo" className="h-10" />
             <div>
               <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight uppercase">
-                {currentView === 'pos' ? 'PDV' : currentView === 'sales' ? 'Histórico' : currentView === 'inventory' ? 'Estoque' : currentView === 'customers' ? 'Clientes' : currentView === 'dashboard' ? 'Relatórios' : 'Configurações'}
+                {currentView === 'pos' ? 'PDV' : currentView === 'sales' ? 'Histórico' : currentView === 'inventory' ? 'Estoque' : currentView === 'customers' ? 'Clientes' : currentView === 'dashboard' ? 'Relatórios' : currentView === 'receivables' ? 'Contas a Receber' : 'Configurações'}
               </h2>
               <div className="flex items-center gap-2 mt-1">
                 <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-orange-500'}`}></span>

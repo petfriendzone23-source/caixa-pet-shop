@@ -35,6 +35,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout, isCol
     { id: 'pos', label: 'Venda (PDV)', icon: '🛒' },
     { id: 'storefront', label: 'Frente de Loja', icon: '📺' },
     { id: 'sales', label: 'Histórico', icon: '📜' },
+    { id: 'receivables', label: 'Contas a Receber', icon: '💰' },
     { id: 'inventory', label: 'Estoque', icon: '📦' },
     { id: 'customers', label: 'Clientes', icon: '👥' },
     { id: 'dashboard', label: 'Relatórios', icon: '📊' },

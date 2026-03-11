@@ -53,6 +53,26 @@ export interface Sale {
   payments: PaymentEntry[];
   customerId?: string;
   customerName?: string;
+  isCreditSale?: boolean; // Indica se é uma venda "Fiado"
 }
 
-export type View = 'pos' | 'inventory' | 'dashboard' | 'settings' | 'customers' | 'sales' | 'storefront';
+export interface DebtPayment {
+  id: string;
+  amount: number;
+  date: number;
+  method: string;
+}
+
+export interface Debt {
+  id: string;
+  saleId: string;
+  customerId: string;
+  customerName: string;
+  totalAmount: number;
+  remainingAmount: number;
+  status: 'pending' | 'paid';
+  createdAt: number;
+  payments: DebtPayment[];
+}
+
+export type View = 'pos' | 'inventory' | 'dashboard' | 'settings' | 'customers' | 'sales' | 'storefront' | 'receivables';

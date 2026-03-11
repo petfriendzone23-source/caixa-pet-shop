@@ -231,11 +231,13 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
   const paidAmount = payments.reduce((sum, p) => sum + p.amount, 0);
   const changeAmount = Math.max(0, paidAmount - total);
 
-  const handleFinalize = () => {
-    if (paidAmount < total - 0.01) return alert("Pagamento insuficiente");
+  const handleFinalize = (isCredit: boolean = false) => {
+    if (!isCredit && paidAmount < total - 0.01) return alert("Pagamento insuficiente");
+    if (isCredit && !selectedCustomerId) return alert("Selecione um cliente para vender fiado");
+    
     const customer = customers.find(c => c.id === selectedCustomerId);
     
-    const paymentEntries: PaymentEntry[] = payments.map(p => {
+    const paymentEntries: PaymentEntry[] = isCredit ? [] : payments.map(p => {
       const method = paymentMethods.find(m => m.id === p.methodId);
       const feePercent = method?.feePercent || 0;
       const feeAmount = (p.amount * feePercent) / 100;
@@ -251,11 +253,12 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
       id: editingSale ? editingSale.id : nextSaleNumber.toString().padStart(6, '0'),
       items: [...cart],
       total,
-      change: changeAmount,
+      change: isCredit ? 0 : changeAmount,
       timestamp: editingSale ? editingSale.timestamp : Date.now(),
       payments: paymentEntries,
       customerId: customer?.id,
-      customerName: customer?.name
+      customerName: customer?.name,
+      isCreditSale: isCredit
     });
 
     if (!editingSale) {
@@ -447,6 +450,20 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
             >
               {editingSale ? 'SALVAR ALTERAÇÕES' : 'FINALIZAR VENDA'}
             </button>
+
+            {!editingSale && (
+              <button 
+                disabled={cart.length === 0 || !selectedCustomerId} 
+                onClick={() => {
+                  if (window.confirm(`Confirmar venda fiado para ${customers.find(c => c.id === selectedCustomerId)?.name}?`)) {
+                    handleFinalize(true);
+                  }
+                }}
+                className="w-full py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-2xl font-black text-sm transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed border border-slate-200 dark:border-slate-700"
+              >
+                VENDER FIADO (CONTA)
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -532,7 +549,7 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
             </div>
 
             <div className="flex flex-col gap-3">
-              <button disabled={paidAmount < total - 0.01} onClick={handleFinalize} className="w-full py-5 bg-orange-600 text-white rounded-[24px] font-black text-lg disabled:opacity-50 transition-all">CONCLUIR VENDA</button>
+              <button disabled={paidAmount < total - 0.01} onClick={() => handleFinalize(false)} className="w-full py-5 bg-orange-600 text-white rounded-[24px] font-black text-lg disabled:opacity-50 transition-all">CONCLUIR VENDA</button>
               <button onClick={() => setShowPaymentModal(false)} className="w-full py-3 text-slate-400 font-bold">VOLTAR</button>
             </div>
           </div>
