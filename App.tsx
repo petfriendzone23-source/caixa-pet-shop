@@ -196,10 +196,12 @@ const App: React.FC = () => {
     setDebts(prev => prev.map(d => {
       if (d.id === debtId) {
         const newRemaining = Math.max(0, d.remainingAmount - payment.amount);
+        // Usamos 0.01 para evitar problemas de precisão com números decimais
+        const isPaid = newRemaining < 0.01;
         return {
           ...d,
-          remainingAmount: newRemaining,
-          status: newRemaining === 0 ? 'paid' : 'pending',
+          remainingAmount: isPaid ? 0 : newRemaining,
+          status: isPaid ? 'paid' : 'pending',
           payments: [...d.payments, payment]
         };
       }
