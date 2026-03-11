@@ -75,7 +75,7 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const session = localStorage.getItem('nxpet_session');
+    const session = sessionStorage.getItem('nxpet_session');
     if (session) {
       setIsAuthenticated(true);
       setCurrentUser(session);
@@ -110,8 +110,8 @@ const App: React.FC = () => {
     }
   }, [products, sales, paymentMethods, customers, nextSaleNumber, companyInfo, isAuthenticated]);
 
-  const handleLogin = (u: string) => { setIsAuthenticated(true); setCurrentUser(u); localStorage.setItem('nxpet_session', u); };
-  const handleLogout = () => { setIsAuthenticated(false); setCurrentUser(null); localStorage.removeItem('nxpet_session'); };
+  const handleLogin = (u: string) => { setIsAuthenticated(true); setCurrentUser(u); sessionStorage.setItem('nxpet_session', u); };
+  const handleLogout = () => { setIsAuthenticated(false); setCurrentUser(null); sessionStorage.removeItem('nxpet_session'); };
 
   const handleCompleteSale = (sale: Sale) => {
     const isEdit = sales.some(s => s.id === sale.id);
