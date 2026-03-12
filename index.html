@@ -86,25 +86,32 @@
           overflow: visible !important;
           background-color: white !important;
           color: black !important;
-          print-color-adjust: exact; /* Força a impressão de cores de fundo */
+          print-color-adjust: exact;
           -webkit-print-color-adjust: exact;
-          text-rendering: optimizeLegibility;
-          -webkit-font-smoothing: antialiased;
+          width: 58mm !important;
+          margin: 0 auto !important;
+          padding: 0 !important;
         }
-        @page { margin: 0; size: auto; }
+        @page { margin: 0; size: 58mm auto; }
 
-        /* Oculta a sidebar e o main content por padrão na impressão, exceto se for para etiquetas */
-        body > #root > div > aside, /* Sidebar */
-        header {
+        /* Oculta elementos desnecessários */
+        aside, header, .print\:hidden {
           display: none !important;
           visibility: hidden !important;
         }
 
-        /* Se não estivermos imprimindo o recibo, podemos querer mostrar partes do main */
-        /* Mas para simplificar, vamos usar classes utilitárias */
-        .print\:hidden {
-          display: none !important;
-          visibility: hidden !important;
+        /* Ajusta o container principal para impressão */
+        main {
+          padding: 0 !important;
+          margin: 0 !important;
+          display: block !important;
+          width: 58mm !important;
+        }
+
+        section {
+          padding: 0 !important;
+          margin: 0 !important;
+          overflow: visible !important;
         }
 
         .print\:block {
@@ -112,23 +119,13 @@
           visibility: visible !important;
         }
 
-        /* Ajustes para o conteúdo interno do modal de recibo */
+        /* Ajustes para o modal de recibo */
         .fixed.inset-0.bg-slate-900\/80 {
           position: static !important; 
           background-color: white !important;
-          backdrop-filter: none !important;
           display: block !important;
-          visibility: visible !important;
-          width: 100% !important;
-          height: auto !important;
-          overflow: visible !important;
-          padding: 0 !important; 
-          margin: 0 !important;
-          top: auto !important;
-          left: auto !important;
-          right: auto !important;
-          bottom: auto !important;
-          z-index: auto !important;
+          width: 58mm !important;
+          padding: 0 !important;
         }
 
         .fixed.inset-0.bg-slate-900\/80 * {

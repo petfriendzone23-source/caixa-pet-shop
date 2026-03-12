@@ -270,12 +270,21 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
         {/* Área de Impressão (Oculta na tela, visível no print) */}
         <div className="hidden print:block print:bg-white print:text-black">
-          <div className="grid grid-cols-3 gap-4 p-4">
+          <div className="flex flex-col items-center w-[58mm] mx-auto">
             {products.filter(p => selectedProducts.includes(p.id)).map(product => (
-              <div key={product.id} className="border border-slate-300 p-4 flex flex-col items-center justify-center text-center break-inside-avoid">
-                <p className="font-bold text-xs mb-1 truncate w-full">{product.name}</p>
-                <Barcode value={product.code} width={1.5} height={50} fontSize={12} />
-                <p className="font-black text-sm mt-1">R$ {product.price.toFixed(2)}</p>
+              <div key={product.id} className="w-full border-b border-dashed border-slate-300 py-6 flex flex-col items-center justify-center text-center break-inside-avoid">
+                <p className="font-bold text-[10px] mb-1 truncate w-full uppercase px-2">{product.name}</p>
+                <div className="flex justify-center w-full overflow-hidden">
+                  <Barcode 
+                    value={product.code} 
+                    width={1.2} 
+                    height={50} 
+                    fontSize={10}
+                    margin={0}
+                    displayValue={true}
+                  />
+                </div>
+                <p className="font-black text-sm mt-2">R$ {product.price.toFixed(2)}</p>
               </div>
             ))}
           </div>
