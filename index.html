@@ -93,15 +93,26 @@
         }
         @page { margin: 0; size: auto; }
 
-        /* Oculta a sidebar e o main content */
+        /* Oculta a sidebar e o main content por padrão na impressão, exceto se for para etiquetas */
         body > #root > div > aside, /* Sidebar */
-        body > #root > div > main /* Main content */
-        {
+        header {
           display: none !important;
           visibility: hidden !important;
         }
 
-        /* Garante que o modal de recibo seja o único elemento visível e com estilos adequados para impressão */
+        /* Se não estivermos imprimindo o recibo, podemos querer mostrar partes do main */
+        /* Mas para simplificar, vamos usar classes utilitárias */
+        .print\:hidden {
+          display: none !important;
+          visibility: hidden !important;
+        }
+
+        .print\:block {
+          display: block !important;
+          visibility: visible !important;
+        }
+
+        /* Ajustes para o conteúdo interno do modal de recibo */
         .fixed.inset-0.bg-slate-900\/80 {
           position: static !important; 
           background-color: white !important;

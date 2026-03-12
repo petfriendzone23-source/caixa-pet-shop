@@ -1,8 +1,10 @@
 
 import React, { useState, useRef } from 'react';
-import { PaymentMethod, CompanyInfo } from '../types';
+import { PaymentMethod, CompanyInfo, Product } from '../types';
+import Barcode from 'react-barcode';
 
 interface SettingsViewProps {
+  products: Product[];
   paymentMethods: PaymentMethod[];
   companyInfo: CompanyInfo;
   isDarkMode: boolean;
@@ -16,11 +18,13 @@ interface SettingsViewProps {
 }
 
 const SettingsView: React.FC<SettingsViewProps> = ({ 
-  paymentMethods, companyInfo, isDarkMode, setIsDarkMode, uiScale, setUiScale, onAddMethod, onRemoveMethod, onUpdateMethodFee, onUpdateCompanyInfo
+  products, paymentMethods, companyInfo, isDarkMode, setIsDarkMode, uiScale, setUiScale, onAddMethod, onRemoveMethod, onUpdateMethodFee, onUpdateCompanyInfo
 }) => {
-  const [activeTab, setActiveTab] = useState<'company' | 'payments' | 'appearance' | 'data'>('company');
+  const [activeTab, setActiveTab] = useState<'company' | 'payments' | 'appearance' | 'data' | 'labels'>('company');
   const [newMethodName, setNewMethodName] = useState('');
   const [newMethodFee, setNewMethodFee] = useState<number>(0);
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [labelSearch, setLabelSearch] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleExport = () => {
@@ -70,8 +74,28 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     { id: 'company', label: 'Empresa', icon: '🏢' },
     { id: 'payments', label: 'Pagamentos', icon: '💳' },
     { id: 'appearance', label: 'Aparência', icon: '🎨' },
+    { id: 'labels', label: 'Etiquetas', icon: '🏷️' },
     { id: 'data', label: 'Dados', icon: '💾' },
   ] as const;
+
+  const toggleProductSelection = (id: string) => {
+    setSelectedProducts(prev => 
+      prev.includes(id) ? prev.filter(pId => pId !== id) : [...prev, id]
+    );
+  };
+
+  const handlePrintLabels = () => {
+    if (selectedProducts.length === 0) {
+      alert("Selecione ao menos um produto para imprimir etiquetas.");
+      return;
+    }
+    window.print();
+  };
+
+  const filteredProducts = products.filter(p => 
+    p.name.toLowerCase().includes(labelSearch.toLowerCase()) || 
+    p.code.toLowerCase().includes(labelSearch.toLowerCase())
+  );
 
   return (
     <div className="max-w-4xl space-y-6">
@@ -192,6 +216,70 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
           </div>
         )}
+
+        {activeTab === 'labels' && (
+          <div className="bg-white dark:bg-slate-900 rounded-[40px] p-10 border border-slate-200 dark:border-slate-800 shadow-sm transition-colors animate-in fade-in slide-in-from-bottom-4 print:hidden">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-black uppercase text-slate-800 dark:text-white flex items-center gap-2">
+                <span>🏷️</span> Gerador de Etiquetas
+              </h3>
+              <button 
+                onClick={handlePrintLabels}
+                className="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white font-black rounded-2xl uppercase text-xs shadow-lg shadow-orange-900/20 transition-all active:scale-95"
+              >
+                🖨️ Imprimir Selecionadas ({selectedProducts.length})
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <input 
+                type="text" 
+                placeholder="Buscar produto por nome ou código..." 
+                className="w-full px-5 py-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 dark:bg-slate-800 dark:text-white outline-none focus:border-orange-500 font-bold"
+                value={labelSearch}
+                onChange={(e) => setLabelSearch(e.target.value)}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+              {filteredProducts.map(product => (
+                <div 
+                  key={product.id}
+                  onClick={() => toggleProductSelection(product.id)}
+                  className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center gap-4 ${
+                    selectedProducts.includes(product.id)
+                      ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/10'
+                      : 'border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700'
+                  }`}
+                >
+                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${selectedProducts.includes(product.id) ? 'bg-orange-500 border-orange-500 text-white' : 'border-slate-300'}`}>
+                    {selectedProducts.includes(product.id) && '✓'}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold text-sm text-slate-800 dark:text-white">{product.name}</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{product.code} • R$ {product.price.toFixed(2)}</p>
+                  </div>
+                  <div className="bg-white p-1 rounded border border-slate-100 scale-75 origin-right">
+                    <Barcode value={product.code} width={1} height={30} fontSize={10} margin={0} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Área de Impressão (Oculta na tela, visível no print) */}
+        <div className="hidden print:block print:bg-white print:text-black">
+          <div className="grid grid-cols-3 gap-4 p-4">
+            {products.filter(p => selectedProducts.includes(p.id)).map(product => (
+              <div key={product.id} className="border border-slate-300 p-4 flex flex-col items-center justify-center text-center break-inside-avoid">
+                <p className="font-bold text-xs mb-1 truncate w-full">{product.name}</p>
+                <Barcode value={product.code} width={1.5} height={50} fontSize={12} />
+                <p className="font-black text-sm mt-1">R$ {product.price.toFixed(2)}</p>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {activeTab === 'data' && (
           <div className="bg-slate-900 rounded-[40px] p-10 text-white relative overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-4">

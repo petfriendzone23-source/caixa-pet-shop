@@ -234,6 +234,7 @@ const App: React.FC = () => {
       case 'receivables': return <ReceivablesView debts={debts} onPayDebt={handlePayDebt} onDeleteDebt={(id) => setDebts(debts.filter(d => d.id !== id))} />;
       case 'storefront': return <StorefrontView onEnterSystem={() => setCurrentView('pos')} />;
       case 'settings': return <SettingsView 
+        products={products}
         paymentMethods={paymentMethods} 
         companyInfo={companyInfo} 
         isDarkMode={isDarkMode} 
