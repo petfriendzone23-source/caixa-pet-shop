@@ -89,7 +89,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({
       alert("Selecione ao menos um produto para imprimir etiquetas.");
       return;
     }
+    document.body.classList.add('printing-labels');
     window.print();
+    document.body.classList.remove('printing-labels');
   };
 
   const filteredProducts = products.filter(p => 
@@ -273,18 +275,16 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           <div className="flex flex-col items-center w-[58mm] mx-auto">
             {products.filter(p => selectedProducts.includes(p.id)).map(product => (
               <div key={product.id} className="w-full border-b border-dashed border-slate-300 py-6 flex flex-col items-center justify-center text-center break-inside-avoid">
-                <p className="font-bold text-[10px] mb-1 truncate w-full uppercase px-2">{product.name}</p>
                 <div className="flex justify-center w-full overflow-hidden">
                   <Barcode 
                     value={product.code} 
                     width={1.2} 
-                    height={50} 
-                    fontSize={10}
+                    height={60} 
+                    fontSize={12}
                     margin={0}
                     displayValue={true}
                   />
                 </div>
-                <p className="font-black text-sm mt-2">R$ {product.price.toFixed(2)}</p>
               </div>
             ))}
           </div>

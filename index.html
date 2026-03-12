@@ -89,76 +89,64 @@
           print-color-adjust: exact;
           -webkit-print-color-adjust: exact;
           width: 58mm !important;
-          margin: 0 auto !important;
+          margin: 0 !important;
           padding: 0 !important;
         }
         @page { margin: 0; size: 58mm auto; }
 
-        /* Oculta elementos desnecessários */
-        aside, header, .print\:hidden {
+        /* Oculta tudo por padrão na impressão */
+        aside, header, main, .receipt-modal-wrapper, .print\:hidden {
           display: none !important;
           visibility: hidden !important;
         }
 
-        /* Ajusta o container principal para impressão */
-        main {
-          padding: 0 !important;
-          margin: 0 !important;
+        /* Mostra apenas o que for solicitado via classe no body */
+        body.printing-labels main {
           display: block !important;
+          visibility: visible !important;
           width: 58mm !important;
         }
 
-        section {
+        body.printing-labels section {
+          display: block !important;
+          visibility: visible !important;
           padding: 0 !important;
           margin: 0 !important;
-          overflow: visible !important;
         }
 
-        .print\:block {
+        body.printing-labels .print\:block {
           display: block !important;
           visibility: visible !important;
         }
 
-        /* Ajustes para o modal de recibo */
-        .fixed.inset-0.bg-slate-900\/80 {
-          position: static !important; 
-          background-color: white !important;
+        body.printing-receipt .receipt-modal-wrapper {
           display: block !important;
+          visibility: visible !important;
+          position: static !important;
           width: 58mm !important;
-          padding: 0 !important;
+          background-color: white !important;
         }
 
-        .fixed.inset-0.bg-slate-900\/80 * {
-          color: black !important; /* Força todo o texto a ser preto */
-          text-shadow: none !important; /* Remove qualquer sombra de texto */
-          box-shadow: none !important; /* Remove qualquer sombra de caixa */
-          background-color: transparent !important; /* Garante fundo transparente para elementos internos */
+        .receipt-modal-wrapper * {
+          color: black !important;
+          text-shadow: none !important;
+          box-shadow: none !important;
+          background-color: transparent !important;
         }
 
-        /* Ajustes para o conteúdo interno do modal */
-        .fixed.inset-0.bg-slate-900\/80 > div {
+        .receipt-modal-wrapper > div {
           box-shadow: none !important;
           border: none !important;
-          width: 100% !important;
-          max-width: 190px !important; /* Reduzido para dar mais espaço nas bordas (aprox. 58mm) */
-          margin: 0 auto !important; /* Centraliza o recibo */
+          width: 58mm !important;
+          margin: 0 !important;
           border-radius: 0 !important;
-          box-sizing: border-box !important; /* Garante que padding e borda sejam incluídos na largura */
         }
 
         /* Otimização para o código de barras */
         .barcode {
           image-rendering: -webkit-optimize-contrast;
           image-rendering: crisp-edges;
-          color: black !important; /* Garante que o código de barras seja preto */
-          -webkit-font-smoothing: antialiased; /* Suaviza a fonte do código de barras */
-          text-shadow: none !important; /* Remove sombra do código de barras */
-        }
-
-        /* Oculta os botões de ação do modal na impressão */
-        .fixed.inset-0.bg-slate-900\/80 .print\:hidden {
-          display: none !important;
-          visibility: hidden !important;
+          color: black !important;
         }
       }
 
