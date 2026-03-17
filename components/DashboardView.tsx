@@ -36,6 +36,8 @@ const DashboardView: React.FC<DashboardViewProps> = ({ sales }) => {
     let cogs = 0;
     let financialFees = 0;
     const productStats: Record<string, { qty: number, rev: number, cost: number, category: string, subgroup?: string }> = {};
+    const categoryStats: Record<string, { rev: number, cost: number, qty: number }> = {};
+    const subgroupStats: Record<string, { rev: number, cost: number, qty: number }> = {};
 
     filteredSalesByDate.forEach(sale => {
       // Filtro Duplo: Categoria + Subgrupo
@@ -60,12 +62,30 @@ const DashboardView: React.FC<DashboardViewProps> = ({ sales }) => {
         const itemRevTotal = item.price * item.quantity;
         cogs += itemCostTotal;
 
+        // Stats por Produto
         if (!productStats[item.name]) {
           productStats[item.name] = { qty: 0, rev: 0, cost: 0, category: item.category, subgroup: item.subgroup };
         }
         productStats[item.name].qty += item.quantity;
         productStats[item.name].rev += itemRevTotal;
         productStats[item.name].cost += itemCostTotal;
+
+        // Stats por Categoria
+        if (!categoryStats[item.category]) {
+          categoryStats[item.category] = { rev: 0, cost: 0, qty: 0 };
+        }
+        categoryStats[item.category].rev += itemRevTotal;
+        categoryStats[item.category].cost += itemCostTotal;
+        categoryStats[item.category].qty += item.quantity;
+
+        // Stats por Subgrupo
+        const subName = item.subgroup || 'Sem Subgrupo';
+        if (!subgroupStats[subName]) {
+          subgroupStats[subName] = { rev: 0, cost: 0, qty: 0 };
+        }
+        subgroupStats[subName].rev += itemRevTotal;
+        subgroupStats[subName].cost += itemCostTotal;
+        subgroupStats[subName].qty += item.quantity;
       });
     });
 
@@ -81,6 +101,12 @@ const DashboardView: React.FC<DashboardViewProps> = ({ sales }) => {
       netOperatingProfit,
       margin: netMargin,
       productStats: Object.entries(productStats)
+        .map(([name, data]) => ({ name, ...data }))
+        .sort((a, b) => b.rev - a.rev),
+      categoryStats: Object.entries(categoryStats)
+        .map(([name, data]) => ({ name, ...data }))
+        .sort((a, b) => b.rev - a.rev),
+      subgroupStats: Object.entries(subgroupStats)
         .map(([name, data]) => ({ name, ...data }))
         .sort((a, b) => b.rev - a.rev)
     };
@@ -234,6 +260,62 @@ const DashboardView: React.FC<DashboardViewProps> = ({ sales }) => {
                 <span className="text-2xl font-black text-orange-500">R$ {dreData.netOperatingProfit.toFixed(2)}</span>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Tabela de Grupos (Categorias) */}
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="p-6 border-b border-slate-100 bg-slate-50/30">
+            <h3 className="text-md font-black text-slate-800 uppercase tracking-tight">Total por Grupo (Categoria)</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest border-b border-slate-100">
+                <tr>
+                  <th className="px-6 py-3">Categoria</th>
+                  <th className="px-6 py-3 text-right">Faturamento</th>
+                  <th className="px-6 py-3 text-right">Lucro</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {dreData.categoryStats.map((cat, idx) => (
+                  <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="px-6 py-3 font-bold text-slate-700 text-sm uppercase">{cat.name}</td>
+                    <td className="px-6 py-3 text-right font-black text-slate-900 text-sm">R$ {cat.rev.toFixed(2)}</td>
+                    <td className="px-6 py-3 text-right text-green-600 text-sm font-black">R$ {(cat.rev - cat.cost).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Tabela de Subgrupos (Marcas) */}
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="p-6 border-b border-slate-100 bg-slate-50/30">
+            <h3 className="text-md font-black text-slate-800 uppercase tracking-tight">Total por Subgrupo (Marca)</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest border-b border-slate-100">
+                <tr>
+                  <th className="px-6 py-3">Subgrupo / Marca</th>
+                  <th className="px-6 py-3 text-right">Faturamento</th>
+                  <th className="px-6 py-3 text-right">Lucro</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {dreData.subgroupStats.map((sub, idx) => (
+                  <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="px-6 py-3 font-bold text-slate-700 text-sm uppercase">{sub.name}</td>
+                    <td className="px-6 py-3 text-right font-black text-slate-900 text-sm">R$ {sub.rev.toFixed(2)}</td>
+                    <td className="px-6 py-3 text-right text-green-600 text-sm font-black">R$ {(sub.rev - sub.cost).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
