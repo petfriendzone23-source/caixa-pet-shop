@@ -85,7 +85,7 @@ const ReceivablesView: React.FC<ReceivablesViewProps> = ({ debts, onPayDebt, onD
             onChange={e => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {(['all', 'pending', 'paid'] as const).map(status => (
             <button
               key={status}

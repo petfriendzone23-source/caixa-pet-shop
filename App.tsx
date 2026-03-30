@@ -34,6 +34,16 @@ const App: React.FC = () => {
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => localStorage.getItem('nxpet_dark_mode') === 'true');
   const [uiScale, setUiScale] = useState<number>(() => parseFloat(localStorage.getItem('nxpet_ui_scale') || '1'));
+  const [layoutMode, setLayoutMode] = useState<'auto' | 'desktop' | 'mobile'>(() => (localStorage.getItem('nxpet_layout_mode') as 'auto' | 'desktop' | 'mobile') || 'auto');
+  const [isMobileScreen, setIsMobileScreen] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobileScreen(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const isMobileLayout = layoutMode === 'mobile' || (layoutMode === 'auto' && isMobileScreen);
   
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
@@ -65,6 +75,20 @@ const App: React.FC = () => {
     document.documentElement.style.fontSize = `${uiScale * 16}px`;
     localStorage.setItem('nxpet_ui_scale', uiScale.toString());
   }, [uiScale]);
+
+  useEffect(() => {
+    localStorage.setItem('nxpet_layout_mode', layoutMode);
+    const viewportMeta = document.querySelector('meta[name="viewport"]');
+    if (viewportMeta) {
+      if (layoutMode === 'desktop') {
+        // Force desktop viewport on mobile devices
+        viewportMeta.setAttribute('content', 'width=1280, initial-scale=0.1, maximum-scale=2.0, user-scalable=yes');
+      } else {
+        // Default responsive viewport
+        viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+      }
+    }
+  }, [layoutMode]);
 
   useEffect(() => {
     const handleStatus = () => setIsOnline(navigator.onLine);
@@ -241,6 +265,8 @@ const App: React.FC = () => {
         setIsDarkMode={setIsDarkMode} 
         uiScale={uiScale}
         setUiScale={setUiScale}
+        layoutMode={layoutMode}
+        setLayoutMode={setLayoutMode}
         onAddMethod={(n, f) => setPaymentMethods([...paymentMethods, {id: Math.random().toString(), name: n, feePercent: f, icon: '💰'}])} 
         onRemoveMethod={(id) => setPaymentMethods(paymentMethods.filter(p => p.id !== id))} 
         onUpdateMethodFee={(id, f) => setPaymentMethods(paymentMethods.map(p => p.id === id ? {...p, feePercent: f} : p))} 
@@ -254,27 +280,28 @@ const App: React.FC = () => {
 
   if (currentView === 'storefront') {
     return (
-      <div className="h-screen w-screen overflow-hidden bg-slate-950">
+      <div className={`h-screen w-screen overflow-hidden bg-slate-950 ${layoutMode === 'mobile' ? 'max-w-[480px] mx-auto border-x-4 border-slate-800 shadow-2xl relative' : ''}`}>
         <StorefrontView onEnterSystem={() => setCurrentView('pos')} />
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors duration-500">
+    <div className={`flex ${isMobileLayout ? 'flex-col-reverse' : 'flex-row'} h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors duration-500 ${layoutMode === 'mobile' ? 'max-w-[480px] mx-auto border-x-4 border-slate-200 dark:border-slate-800 shadow-2xl relative' : ''}`}>
       <Sidebar 
         currentView={currentView} 
         setView={setCurrentView} 
         onLogout={handleLogout} 
         isCollapsed={isSidebarCollapsed}
         setIsCollapsed={setIsSidebarCollapsed}
+        isMobileLayout={isMobileLayout}
       />
-      <main className="flex-1 flex flex-col min-w-0">
-        <header className="flex justify-between items-center p-8 pb-4 print:hidden">
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <header className={`flex justify-between items-center ${isMobileLayout ? 'p-4 pb-2' : 'p-8 pb-4'} print:hidden`}>
           <div className="flex items-center gap-4">
-            <img src="/logo.svg" alt="NexusPet Logo" className="h-10" />
+            <img src="/logo.svg" alt="NexusPet Logo" className={`${isMobileLayout ? 'h-8' : 'h-10'}`} />
             <div>
-              <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight uppercase">
+              <h2 className={`${isMobileLayout ? 'text-xl' : 'text-3xl'} font-extrabold text-slate-900 dark:text-white tracking-tight uppercase`}>
                 {currentView === 'pos' ? 'PDV' : currentView === 'sales' ? 'Histórico' : currentView === 'inventory' ? 'Estoque' : currentView === 'customers' ? 'Clientes' : currentView === 'dashboard' ? 'Relatórios' : currentView === 'receivables' ? 'Contas a Receber' : 'Configurações'}
               </h2>
               <div className="flex items-center gap-2 mt-1">
@@ -284,17 +311,19 @@ const App: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <div className="text-right">
-              <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{currentUser}</p>
-              <p className="text-[9px] text-slate-500 font-black uppercase tracking-tighter">Administrador</p>
-            </div>
-            <div className="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
+            {!isMobileLayout && (
+              <div className="text-right">
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{currentUser}</p>
+                <p className="text-[9px] text-slate-500 font-black uppercase tracking-tighter">Administrador</p>
+              </div>
+            )}
+            <div className={`${isMobileLayout ? 'w-8 h-8 text-sm' : 'w-10 h-10 text-lg'} bg-orange-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg`}>
               {currentUser?.charAt(0).toUpperCase()}
             </div>
           </div>
         </header>
         
-        <section className="flex-1 overflow-y-auto px-8 pb-8 custom-scrollbar print:overflow-visible">
+        <section className={`flex-1 overflow-y-auto ${isMobileLayout ? 'px-4 pb-4' : 'px-8 pb-8'} custom-scrollbar print:overflow-visible`}>
           {renderView()}
         </section>
       </main>

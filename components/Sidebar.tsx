@@ -8,9 +8,10 @@ interface SidebarProps {
   onLogout: () => void;
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
+  isMobileLayout?: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout, isCollapsed, setIsCollapsed }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout, isCollapsed, setIsCollapsed, isMobileLayout }) => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
@@ -41,6 +42,34 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout, isCol
     { id: 'dashboard', label: 'Relatórios', icon: '📊' },
     { id: 'settings', label: 'Ajustes', icon: '⚙️' },
   ];
+
+  if (isMobileLayout) {
+    return (
+      <nav className="bg-slate-900 dark:bg-black text-white flex justify-around items-center p-2 pb-safe sticky bottom-0 z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
+        {menuItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => setView(item.id)}
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
+              currentView === item.id 
+                ? 'text-orange-500 scale-110' 
+                : 'text-slate-500 hover:text-slate-300'
+            }`}
+          >
+            <span className="text-2xl mb-1">{item.icon}</span>
+            <span className="text-[9px] font-black uppercase tracking-tighter">{item.label.split(' ')[0]}</span>
+          </button>
+        ))}
+        <button 
+          onClick={() => window.confirm('Sair do sistema?') && onLogout()} 
+          className="flex flex-col items-center justify-center p-2 rounded-xl text-slate-500 hover:text-red-400 transition-all"
+        >
+          <span className="text-2xl mb-1">🚪</span>
+          <span className="text-[9px] font-black uppercase tracking-tighter">Sair</span>
+        </button>
+      </nav>
+    );
+  }
 
   return (
     <aside className={`${isCollapsed ? 'w-24' : 'w-64'} bg-slate-900 dark:bg-black text-white h-screen flex flex-col sticky top-0 print:hidden shadow-2xl transition-all duration-500 ease-in-out`}>

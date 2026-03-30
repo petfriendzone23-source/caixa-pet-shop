@@ -118,22 +118,22 @@ const InventoryView: React.FC<InventoryViewProps> = ({ products, sales, onUpdate
   return (
     <div className="space-y-4">
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-          <div>
+        <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-50/50">
+          <div className="w-full md:w-auto text-center md:text-left">
             <h2 className="text-xl font-black text-slate-800">📦 Estoque e Catálogo</h2>
             <p className="text-xs text-slate-500 mt-1">Gerencie produtos e subgrupos de marcas</p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
             <input 
               type="text" 
               placeholder="Buscar item..." 
-              className="px-4 py-2.5 rounded-xl border-2 border-slate-100 focus:border-orange-500 outline-none text-sm"
+              className="w-full md:w-64 px-4 py-2.5 rounded-xl border-2 border-slate-100 focus:border-orange-500 outline-none text-sm"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
             <button 
               onClick={() => openModal()}
-              className="bg-orange-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-orange-700 transition-all shadow-lg shadow-orange-100 flex items-center gap-2"
+              className="w-full md:w-auto bg-orange-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-orange-700 transition-all shadow-lg shadow-orange-100 flex items-center justify-center gap-2 whitespace-nowrap"
             >
               <span className="text-xl">+</span> Novo Item
             </button>

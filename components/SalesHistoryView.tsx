@@ -45,22 +45,22 @@ const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({ sales, onOpenReceip
         </div>
         
         <div className="flex flex-wrap gap-4 items-end">
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 w-full md:w-auto">
             <label className="text-[10px] font-black text-slate-400 uppercase">Data da Venda</label>
             <input 
               type="date" 
-              className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+              className="w-full md:w-auto px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-orange-500 bg-white"
               value={filterDate}
               onChange={(e) => setFilterDate(e.target.value)}
             />
           </div>
 
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 w-full md:w-auto">
             <label className="text-[10px] font-black text-slate-400 uppercase">Buscar Código/Cliente</label>
             <input 
               type="text" 
               placeholder="Ex: 000001"
-              className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-orange-500 bg-white w-64"
+              className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-orange-500 bg-white w-full md:w-64"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />

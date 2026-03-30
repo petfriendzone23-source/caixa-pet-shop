@@ -140,11 +140,11 @@ const DashboardView: React.FC<DashboardViewProps> = ({ sales }) => {
           <p className="text-xs text-slate-500">Relatórios filtrados por categoria e marcas</p>
         </div>
         
-        <div className="flex flex-wrap gap-4 items-end">
-          <div className="flex flex-col gap-1">
+        <div className="flex flex-wrap gap-4 items-end w-full lg:w-auto">
+          <div className="flex flex-col gap-1 w-full sm:w-auto flex-1 sm:flex-none">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Categoria</label>
             <select 
-              className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-orange-500 bg-white min-w-[140px]"
+              className="w-full px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-orange-500 bg-white min-w-[140px]"
               value={selectedCategory}
               onChange={(e) => {
                 setSelectedCategory(e.target.value);
@@ -155,10 +155,10 @@ const DashboardView: React.FC<DashboardViewProps> = ({ sales }) => {
             </select>
           </div>
 
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 w-full sm:w-auto flex-1 sm:flex-none">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Subgrupo / Marca</label>
             <select 
-              className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-orange-600 outline-none focus:ring-2 focus:ring-orange-500 bg-white min-w-[140px]"
+              className="w-full px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-orange-600 outline-none focus:ring-2 focus:ring-orange-500 bg-white min-w-[140px]"
               value={selectedSubgroup}
               onChange={(e) => setSelectedSubgroup(e.target.value)}
             >
@@ -166,21 +166,21 @@ const DashboardView: React.FC<DashboardViewProps> = ({ sales }) => {
             </select>
           </div>
 
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 w-full sm:w-auto flex-1 sm:flex-none">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Início</label>
             <input 
               type="date" 
-              className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-orange-500"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
             />
           </div>
 
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 w-full sm:w-auto flex-1 sm:flex-none">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fim</label>
             <input 
               type="date" 
-              className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-orange-500"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
             />

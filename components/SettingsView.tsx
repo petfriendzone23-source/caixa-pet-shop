@@ -11,6 +11,8 @@ interface SettingsViewProps {
   setIsDarkMode: (val: boolean) => void;
   uiScale: number;
   setUiScale: (val: number) => void;
+  layoutMode: 'auto' | 'desktop' | 'mobile';
+  setLayoutMode: (val: 'auto' | 'desktop' | 'mobile') => void;
   onAddMethod: (name: string, fee: number) => void;
   onRemoveMethod: (id: string) => void;
   onUpdateMethodFee: (id: string, fee: number) => void;
@@ -18,7 +20,7 @@ interface SettingsViewProps {
 }
 
 const SettingsView: React.FC<SettingsViewProps> = ({ 
-  products, paymentMethods, companyInfo, isDarkMode, setIsDarkMode, uiScale, setUiScale, onAddMethod, onRemoveMethod, onUpdateMethodFee, onUpdateCompanyInfo
+  products, paymentMethods, companyInfo, isDarkMode, setIsDarkMode, uiScale, setUiScale, layoutMode, setLayoutMode, onAddMethod, onRemoveMethod, onUpdateMethodFee, onUpdateCompanyInfo
 }) => {
   const [activeTab, setActiveTab] = useState<'company' | 'payments' | 'appearance' | 'data' | 'labels'>('company');
   const [newMethodName, setNewMethodName] = useState('');
@@ -180,6 +182,31 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                 >
                   <div className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-md transition-all ${isDarkMode ? 'left-9' : 'left-1'}`}></div>
                 </button>
+              </div>
+
+              <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-700">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h4 className="font-bold text-slate-900 dark:text-slate-100">Modo de Exibição (Layout)</h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Forçar layout de PC ou Celular.</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  {[
+                    { id: 'auto', label: 'Automático', icon: '📱💻' },
+                    { id: 'desktop', label: 'Forçar PC', icon: '💻' },
+                    { id: 'mobile', label: 'Forçar Celular', icon: '📱' }
+                  ].map(mode => (
+                    <button 
+                      key={mode.id}
+                      onClick={() => setLayoutMode(mode.id as any)}
+                      className={`flex-1 py-3 px-4 rounded-xl text-xs font-black uppercase transition-all flex flex-col items-center gap-2 ${layoutMode === mode.id ? 'bg-orange-600 text-white shadow-md' : 'bg-white dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700 hover:border-orange-300'}`}
+                    >
+                      <span className="text-xl">{mode.icon}</span>
+                      {mode.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-700">

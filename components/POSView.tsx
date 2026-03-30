@@ -276,8 +276,8 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
   );
 
   return (
-    <div className="flex h-full gap-6">
-      <div className="flex-1 flex flex-col gap-4 overflow-hidden">
+    <div className="flex flex-col lg:flex-row h-full gap-4 lg:gap-6">
+      <div className="flex-1 flex flex-col gap-4 overflow-hidden min-h-[40%] lg:min-h-0">
         <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border dark:border-slate-800 flex flex-wrap gap-4 items-center shadow-sm transition-colors">
           <div className="flex-1 flex gap-2">
              <input 
@@ -298,7 +298,7 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
               />
             </form>
           </div>
-          <div className="flex gap-1 overflow-x-auto pb-1">
+          <div className="flex gap-1 overflow-x-auto pb-1 w-full md:w-auto">
             {CATEGORIES.map(cat => (
               <button 
                 key={cat}
@@ -341,8 +341,8 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
         </DndContext>
       </div>
 
-      <div className="w-96 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-col shadow-xl overflow-hidden transition-colors">
-        <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
+      <div className="w-full lg:w-96 h-[50%] lg:h-auto bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-col shadow-xl overflow-hidden transition-colors shrink-0">
+        <div className="p-4 lg:p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
           <div className="flex justify-between items-center">
             <h2 className="font-black text-slate-800 dark:text-white flex items-center gap-2">
               <span className="text-xl">🛒</span> Carrinho
