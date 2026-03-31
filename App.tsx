@@ -287,7 +287,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className={`flex ${isMobileLayout ? 'flex-col-reverse' : 'flex-row'} h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors duration-500 ${layoutMode === 'mobile' ? 'max-w-[480px] mx-auto border-x-4 border-slate-200 dark:border-slate-800 shadow-2xl relative' : ''}`}>
+    <div className={`flex ${isMobileLayout ? 'flex-col' : 'flex-row'} h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors duration-500 ${layoutMode === 'mobile' ? 'max-w-[480px] mx-auto border-x-4 border-slate-200 dark:border-slate-800 shadow-2xl relative' : ''}`}>
       <Sidebar 
         currentView={currentView} 
         setView={setCurrentView} 
@@ -296,7 +296,7 @@ const App: React.FC = () => {
         setIsCollapsed={setIsSidebarCollapsed}
         isMobileLayout={isMobileLayout}
       />
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <main className={`flex-1 flex flex-col min-w-0 overflow-hidden ${isMobileLayout ? 'pb-24' : ''}`}>
         <header className={`flex justify-between items-center ${isMobileLayout ? 'p-4 pb-2' : 'p-8 pb-4'} print:hidden`}>
           <div className="flex items-center gap-4">
             <img src="/logo.svg" alt="NexusPet Logo" className={`${isMobileLayout ? 'h-8' : 'h-10'}`} />

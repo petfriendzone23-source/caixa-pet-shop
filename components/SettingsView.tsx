@@ -104,12 +104,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   return (
     <div className="max-w-4xl space-y-6">
       {/* Menu de Abas */}
-      <div className="flex flex-wrap gap-2 p-2 bg-slate-100 dark:bg-slate-800 rounded-[32px] border border-slate-200 dark:border-slate-700">
+      <div className="flex overflow-x-auto no-scrollbar gap-2 p-2 bg-slate-100 dark:bg-slate-800 rounded-[32px] border border-slate-200 dark:border-slate-700">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-[24px] font-black uppercase text-xs transition-all ${
+            className={`flex-none flex items-center justify-center gap-2 px-6 py-4 rounded-[24px] font-black uppercase text-[10px] transition-all ${
               activeTab === tab.id 
                 ? 'bg-white dark:bg-slate-700 text-orange-600 shadow-sm scale-[1.02]' 
                 : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'

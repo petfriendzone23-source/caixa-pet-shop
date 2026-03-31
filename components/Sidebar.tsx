@@ -45,28 +45,31 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout, isCol
 
   if (isMobileLayout) {
     return (
-      <nav className="bg-slate-900 dark:bg-black text-white flex justify-around items-center p-2 pb-safe sticky bottom-0 z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
-        {menuItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setView(item.id)}
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
-              currentView === item.id 
-                ? 'text-orange-500 scale-110' 
-                : 'text-slate-500 hover:text-slate-300'
-            }`}
+      <nav className="fixed bottom-6 left-4 right-4 bg-slate-900/90 dark:bg-black/90 backdrop-blur-xl text-white flex items-center px-4 py-3 rounded-[32px] z-50 shadow-[0_20px_50px_rgba(0,0,0,0.4)] border border-white/10 overflow-x-auto no-scrollbar snap-x">
+        <div className="flex items-center gap-1 min-w-max">
+          {menuItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setView(item.id)}
+              className={`flex flex-col items-center justify-center min-w-[70px] p-2 rounded-2xl transition-all duration-300 snap-center ${
+                currentView === item.id 
+                  ? 'bg-orange-600 text-white shadow-lg shadow-orange-900/40 scale-105' 
+                  : 'text-slate-400 hover:text-slate-200 active:bg-slate-800'
+              }`}
+            >
+              <span className="text-xl mb-1">{item.icon}</span>
+              <span className="text-[9px] font-black uppercase tracking-tighter">{item.label.split(' ')[0]}</span>
+            </button>
+          ))}
+          <div className="w-px h-8 bg-slate-800 mx-2"></div>
+          <button 
+            onClick={() => window.confirm('Sair do sistema?') && onLogout()} 
+            className="flex flex-col items-center justify-center min-w-[70px] p-2 rounded-2xl text-slate-500 hover:text-red-400 active:bg-red-500/10 transition-all snap-center"
           >
-            <span className="text-2xl mb-1">{item.icon}</span>
-            <span className="text-[9px] font-black uppercase tracking-tighter">{item.label.split(' ')[0]}</span>
+            <span className="text-xl mb-1">🚪</span>
+            <span className="text-[9px] font-black uppercase tracking-tighter">Sair</span>
           </button>
-        ))}
-        <button 
-          onClick={() => window.confirm('Sair do sistema?') && onLogout()} 
-          className="flex flex-col items-center justify-center p-2 rounded-xl text-slate-500 hover:text-red-400 transition-all"
-        >
-          <span className="text-2xl mb-1">🚪</span>
-          <span className="text-[9px] font-black uppercase tracking-tighter">Sair</span>
-        </button>
+        </div>
       </nav>
     );
   }

@@ -71,6 +71,14 @@
         background: #334155;
       }
 
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+
       .barcode {
         font-family: 'Libre Barcode 128', cursive;
         font-size: 40px;
