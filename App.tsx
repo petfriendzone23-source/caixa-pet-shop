@@ -296,7 +296,7 @@ const App: React.FC = () => {
         setIsCollapsed={setIsSidebarCollapsed}
         isMobileLayout={isMobileLayout}
       />
-      <main className={`flex-1 flex flex-col min-w-0 overflow-hidden ${isMobileLayout ? 'pb-24' : ''}`}>
+      <main className={`flex-1 flex flex-col min-w-0 overflow-hidden ${isMobileLayout ? 'pb-32' : ''}`}>
         <header className={`flex justify-between items-center ${isMobileLayout ? 'p-4 pb-2' : 'p-8 pb-4'} print:hidden`}>
           <div className="flex items-center gap-4">
             <img src="/logo.svg" alt="NexusPet Logo" className={`${isMobileLayout ? 'h-8' : 'h-10'}`} />

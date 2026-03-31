@@ -341,7 +341,7 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
         </DndContext>
       </div>
 
-      <div className="w-full lg:w-96 h-[50%] lg:h-auto bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-col shadow-xl overflow-hidden transition-colors shrink-0">
+      <div className="w-full lg:w-96 flex-1 lg:flex-none lg:h-auto bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-col shadow-xl overflow-hidden transition-colors shrink-0">
         <div className="p-4 lg:p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
           <div className="flex justify-between items-center">
             <h2 className="font-black text-slate-800 dark:text-white flex items-center gap-2">
@@ -419,15 +419,15 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
           )}
         </div>
 
-        <div className="p-6 bg-slate-900 dark:bg-black text-white">
-          <div className="space-y-2 mb-6">
-            <div className="flex justify-between text-slate-400 text-xs uppercase font-black tracking-widest">
+        <div className="p-4 lg:p-6 bg-slate-900 dark:bg-black text-white">
+          <div className="space-y-1 lg:space-y-2 mb-3 lg:mb-6">
+            <div className="flex justify-between text-slate-400 text-[10px] lg:text-xs uppercase font-black tracking-widest">
               <span>Subtotal</span>
               <span>R$ {total.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between items-center pt-2">
-              <span className="font-black text-sm uppercase tracking-widest">Total Geral</span>
-              <span className="text-3xl font-black text-orange-500">R$ {total.toFixed(2)}</span>
+            <div className="flex justify-between items-center pt-1 lg:pt-2">
+              <span className="font-black text-xs lg:text-sm uppercase tracking-widest">Total Geral</span>
+              <span className="text-2xl lg:text-3xl font-black text-orange-500">R$ {total.toFixed(2)}</span>
             </div>
           </div>
           
@@ -435,7 +435,7 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
             {editingSale && (
               <button 
                 onClick={() => onDeleteSale && onDeleteSale(editingSale.id)}
-                className="w-full py-3 bg-red-50 hover:bg-red-600 text-red-600 hover:text-white rounded-2xl font-black text-sm transition-all active:scale-95 border border-red-100 hover:border-red-600"
+                className="w-full py-2 lg:py-3 bg-red-50 hover:bg-red-600 text-red-600 hover:text-white rounded-2xl font-black text-xs lg:text-sm transition-all active:scale-95 border border-red-100 hover:border-red-600"
               >
                 CANCELAR VENDA (EXCLUIR)
               </button>
@@ -446,7 +446,7 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
                 if (payments.length === 0) setPayments([{methodId: paymentMethods[0].id, amount: total}]); 
                 setShowPaymentModal(true); 
               }} 
-              className={`w-full py-4 rounded-2xl font-black text-lg shadow-xl transition-all active:scale-95 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed ${editingSale ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-900/40' : 'bg-orange-600 hover:bg-orange-700 shadow-orange-900/40'}`}
+              className={`w-full py-3 lg:py-4 rounded-2xl font-black text-base lg:text-lg shadow-xl transition-all active:scale-95 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed ${editingSale ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-900/40' : 'bg-orange-600 hover:bg-orange-700 shadow-orange-900/40'}`}
             >
               {editingSale ? 'SALVAR ALTERAÇÕES' : 'FINALIZAR VENDA'}
             </button>
@@ -459,7 +459,7 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
                     handleFinalize(true);
                   }
                 }}
-                className="w-full py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-2xl font-black text-sm transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed border border-slate-200 dark:border-slate-700"
+                className="w-full py-2 lg:py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-2xl font-black text-[10px] lg:text-sm transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed border border-slate-200 dark:border-slate-700"
               >
                 VENDER FIADO (CONTA)
               </button>
