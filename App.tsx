@@ -14,23 +14,6 @@ import ReceiptModal from './components/ReceiptModal.tsx';
 import LoginView from './components/LoginView.tsx';
 import StorefrontView from './components/StorefrontView.tsx';
 
-// Firebase Imports
-import { db, auth } from './src/firebase.ts';
-import { 
-  collection, 
-  onSnapshot, 
-  doc, 
-  setDoc, 
-  updateDoc, 
-  deleteDoc, 
-  getDoc,
-  getDocFromServer,
-  query,
-  orderBy,
-  limit
-} from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
-
 const DEFAULT_PAYMENTS: PaymentMethod[] = [
   { id: 'p1', name: 'Dinheiro', icon: '💵', feePercent: 0 },
   { id: 'p2', name: 'Cartão de Débito', icon: '💳', feePercent: 1.9 },
@@ -73,84 +56,8 @@ const App: React.FC = () => {
   const [lastSale, setLastSale] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => localStorage.getItem('nxpet_sidebar_collapsed') === 'true');
-  const [isAuthReady, setIsAuthReady] = useState(false);
-  const [firebaseError, setFirebaseError] = useState<string | null>(null);
 
-  // Test Connection
-  useEffect(() => {
-    const testConnection = async () => {
-      try {
-        await getDocFromServer(doc(db, 'settings', 'connection_test'));
-      } catch (error: any) {
-        if (error.message?.includes('the client is offline')) {
-          setFirebaseError("Erro de conexão com o Firebase. Verifique sua internet ou configuração.");
-        }
-      }
-    };
-    testConnection();
-  }, []);
-
-  // Firebase Auth Listener
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setIsAuthenticated(true);
-        setCurrentUser(user.email);
-        sessionStorage.setItem('nxpet_session', user.email || 'user');
-      } else {
-        setIsAuthenticated(false);
-        setCurrentUser(null);
-        sessionStorage.removeItem('nxpet_session');
-      }
-      setIsAuthReady(true);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  // Real-time Listeners
-  useEffect(() => {
-    if (!isAuthenticated || !isAuthReady) return;
-
-    const unsubProducts = onSnapshot(collection(db, 'products'), (snapshot) => {
-      const docs = snapshot.docs.map(d => d.data() as Product);
-      if (docs.length > 0) setProducts(docs);
-      else if (products.length === 0) {
-        // Initialize with defaults if empty
-        INITIAL_PRODUCTS.forEach(p => setDoc(doc(db, 'products', p.id), p));
-      }
-    });
-
-    const unsubSales = onSnapshot(query(collection(db, 'sales'), orderBy('timestamp', 'desc')), (snapshot) => {
-      setSales(snapshot.docs.map(d => d.data() as Sale));
-    });
-
-    const unsubCustomers = onSnapshot(collection(db, 'customers'), (snapshot) => {
-      setCustomers(snapshot.docs.map(d => d.data() as Customer));
-    });
-
-    const unsubPayments = onSnapshot(collection(db, 'paymentMethods'), (snapshot) => {
-      const docs = snapshot.docs.map(d => d.data() as PaymentMethod);
-      if (docs.length > 0) setPaymentMethods(docs);
-      else {
-        DEFAULT_PAYMENTS.forEach(p => setDoc(doc(db, 'paymentMethods', p.id), p));
-      }
-    });
-
-    const unsubSettings = onSnapshot(doc(db, 'settings', 'global'), (docSnap) => {
-      if (docSnap.exists()) setCompanyInfo(docSnap.data() as CompanyInfo);
-      else setDoc(doc(db, 'settings', 'global'), DEFAULT_COMPANY);
-    });
-
-    return () => {
-      unsubProducts();
-      unsubSales();
-      unsubCustomers();
-      unsubPayments();
-      unsubSettings();
-    };
-  }, [isAuthenticated, isAuthReady]);
-
-  // Sincroniza a classe 'dark' no elemento <html>
+  // Sincroniza a classe 'dark' no elemento <html> (necessário para Tailwind darkMode: 'class')
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -199,91 +106,113 @@ const App: React.FC = () => {
       setIsAuthenticated(true);
       setCurrentUser(session);
     }
+
+    const load = (key: string, def: any) => {
+      const item = localStorage.getItem(key);
+      try { return item ? JSON.parse(item) : def; } catch { return def; }
+    };
+
+    setProducts(load('nxpet_products', INITIAL_PRODUCTS));
+    const loadedSales = load('nxpet_sales', []);
+    setSales(loadedSales);
+    
+    const storedNextSale = parseInt(localStorage.getItem('nxpet_next_sale_number') || '1');
+    const maxSaleId = loadedSales.reduce((max: number, s: Sale) => Math.max(max, parseInt(s.id) || 0), 0);
+    setNextSaleNumber(Math.max(storedNextSale, maxSaleId + 1));
+    
+    setPaymentMethods(load('nxpet_payments', DEFAULT_PAYMENTS));
+    setCustomers(load('nxpet_customers', []));
+    setDebts(load('nxpet_debts', []));
+    setCompanyInfo(load('nxpet_company', DEFAULT_COMPANY));
   }, []);
 
   useEffect(() => {
     if (isAuthenticated) {
+      localStorage.setItem('nxpet_products', JSON.stringify(products));
+      localStorage.setItem('nxpet_sales', JSON.stringify(sales));
+      localStorage.setItem('nxpet_payments', JSON.stringify(paymentMethods));
+      localStorage.setItem('nxpet_customers', JSON.stringify(customers));
+      localStorage.setItem('nxpet_debts', JSON.stringify(debts));
+      localStorage.setItem('nxpet_company', JSON.stringify(companyInfo));
       localStorage.setItem('nxpet_next_sale_number', nextSaleNumber.toString());
     }
-  }, [nextSaleNumber, isAuthenticated]);
+  }, [products, sales, paymentMethods, customers, nextSaleNumber, companyInfo, isAuthenticated]);
 
-  const handleLogin = (u: string) => { 
-    setIsAuthenticated(true); 
-    setCurrentUser(u); 
-  };
-  
-  const handleLogout = async () => { 
-    try {
-      await auth.signOut();
-      setIsAuthenticated(false); 
-      setCurrentUser(null); 
-      sessionStorage.removeItem('nxpet_session');
-    } catch (error) {
-      console.error("Erro ao fazer logout:", error);
-    }
-  };
+  const handleLogin = (u: string) => { setIsAuthenticated(true); setCurrentUser(u); sessionStorage.setItem('nxpet_session', u); };
+  const handleLogout = () => { setIsAuthenticated(false); setCurrentUser(null); sessionStorage.removeItem('nxpet_session'); };
 
-  const handleCompleteSale = async (sale: Sale) => {
+  const handleCompleteSale = (sale: Sale) => {
     const isEdit = sales.some(s => s.id === sale.id);
     
-    try {
-      if (isEdit) {
-        const oldSale = sales.find(s => s.id === sale.id)!;
-        // Reverte estoque da venda antiga
-        for (const item of oldSale.items) {
-          const p = products.find(prod => prod.id === item.id);
-          if (p && p.category !== 'Serviços') {
-            await updateDoc(doc(db, 'products', p.id), { stock: p.stock + item.quantity });
-          }
-        }
-        // Substitui a venda
-        await setDoc(doc(db, 'sales', sale.id), sale);
-      } else {
-        await setDoc(doc(db, 'sales', sale.id), sale);
-      }
+    if (isEdit) {
+      const oldSale = sales.find(s => s.id === sale.id)!;
+      // Reverte estoque da venda antiga
+      setProducts(prev => prev.map(p => {
+        const item = oldSale.items.find(i => i.id === p.id);
+        if (item && p.category !== 'Serviços') return { ...p, stock: p.stock + item.quantity };
+        return p;
+      }));
+      
+      // Substitui a venda
+      setSales(prev => prev.map(s => s.id === sale.id ? sale : s));
+    } else {
+      setSales(prev => [sale, ...prev]);
+      setNextSaleNumber(n => n + 1);
+    }
 
-      // Aplica estoque da nova venda
-      for (const item of sale.items) {
-        const p = products.find(prod => prod.id === item.id);
-        if (p && p.category !== 'Serviços') {
-          await updateDoc(doc(db, 'products', p.id), { stock: Math.max(0, p.stock - item.quantity) });
-        }
-      }
+    // Aplica estoque da nova venda (ou venda editada)
+    setProducts(prev => prev.map(p => {
+      const item = sale.items.find(i => i.id === p.id);
+      if (item && p.category !== 'Serviços') return { ...p, stock: Math.max(0, p.stock - item.quantity) };
+      return p;
+    }));
 
-      setLastSale(sale);
-      setEditingSale(null);
-    } catch (error) {
-      console.error("Erro ao completar venda:", error);
-      alert("Erro ao salvar venda no Firebase.");
+    setLastSale(sale);
+    setEditingSale(null);
+
+    // Se for venda fiado, cria um débito
+    if (sale.isCreditSale && sale.customerId) {
+      const newDebt: Debt = {
+        id: Math.random().toString(36).substr(2, 9),
+        saleId: sale.id,
+        customerId: sale.customerId,
+        customerName: sale.customerName || 'Cliente',
+        totalAmount: sale.total,
+        remainingAmount: sale.total,
+        status: 'pending',
+        createdAt: Date.now(),
+        payments: []
+      };
+      setDebts(prev => [newDebt, ...prev]);
     }
   };
 
-  const handleCancelSale = async (saleId: string) => {
+  const handleCancelSale = (saleId: string) => {
     const saleToCancel = sales.find(s => s.id === saleId);
     if (!saleToCancel) return;
 
     if (confirm(`⚠️ Tem certeza que deseja CANCELAR a venda ${saleId}? Esta ação é irreversível e o estoque será restaurado.`)) {
-      try {
-        // Restaura o estoque
-        for (const item of saleToCancel.items) {
-          const p = products.find(prod => prod.id === item.id);
-          if (p && p.category !== 'Serviços') {
-            await updateDoc(doc(db, 'products', p.id), { stock: p.stock + item.quantity });
-          }
+      // Restaura o estoque
+      setProducts(prev => prev.map(p => {
+        const item = saleToCancel.items.find(i => i.id === p.id);
+        if (item && p.category !== 'Serviços') {
+          return { ...p, stock: p.stock + item.quantity };
         }
+        return p;
+      }));
 
-        // Remove a venda
-        await deleteDoc(doc(db, 'sales', saleId));
-        
-        if (editingSale?.id === saleId) {
-          setEditingSale(null);
-          setCurrentView('sales');
-        }
-        
-        alert(`Venda ${saleId} cancelada com sucesso.`);
-      } catch (error) {
-        console.error("Erro ao cancelar venda:", error);
+      // Remove a venda
+      setSales(prev => prev.filter(s => s.id !== saleId));
+      
+      // Remove débito associado se existir
+      setDebts(prev => prev.filter(d => d.saleId !== saleId));
+      
+      if (editingSale?.id === saleId) {
+        setEditingSale(null);
+        setCurrentView('sales');
       }
+      
+      alert(`Venda ${saleId} cancelada com sucesso.`);
     }
   };
 
@@ -323,18 +252,8 @@ const App: React.FC = () => {
         onEditSale={(s) => { setEditingSale(s); setCurrentView('pos'); }} 
         onCancelSale={handleCancelSale}
       />;
-      case 'inventory': return <InventoryView 
-        products={products} 
-        sales={sales} 
-        onUpdateStock={(id, s) => updateDoc(doc(db, 'products', id), { stock: s })} 
-        onSaveProduct={(p) => setDoc(doc(db, 'products', p.id), p)} 
-        onDeleteProduct={(id) => deleteDoc(doc(db, 'products', id))} 
-      />;
-      case 'customers': return <CustomerView 
-        customers={customers} 
-        onSaveCustomer={(c) => setDoc(doc(db, 'customers', c.id), c)} 
-        onDeleteCustomer={(id) => deleteDoc(doc(db, 'customers', id))} 
-      />;
+      case 'inventory': return <InventoryView products={products} sales={sales} onUpdateStock={(id, s) => setProducts(products.map(p => p.id === id ? {...p, stock: s} : p))} onSaveProduct={(p) => setProducts(products.find(x => x.id === p.id) ? products.map(x => x.id === p.id ? p : x) : [p, ...products])} onDeleteProduct={(id) => setProducts(products.filter(p => p.id !== id))} />;
+      case 'customers': return <CustomerView customers={customers} onSaveCustomer={(c) => setCustomers(customers.find(x => x.id === c.id) ? customers.map(x => x.id === c.id ? c : x) : [c, ...customers])} onDeleteCustomer={(id) => setCustomers(customers.filter(c => c.id !== id))} />;
       case 'dashboard': return <DashboardView sales={sales} />;
       case 'receivables': return <ReceivablesView debts={debts} onPayDebt={handlePayDebt} onDeleteDebt={(id) => setDebts(debts.filter(d => d.id !== id))} />;
       case 'storefront': return <StorefrontView onEnterSystem={() => setCurrentView('pos')} />;
@@ -348,35 +267,14 @@ const App: React.FC = () => {
         setUiScale={setUiScale}
         layoutMode={layoutMode}
         setLayoutMode={setLayoutMode}
-        onAddMethod={(n, f) => {
-          const id = Math.random().toString(36).substr(2, 9);
-          setDoc(doc(db, 'paymentMethods', id), { id, name: n, feePercent: f, icon: '💰' });
-        }} 
-        onRemoveMethod={(id) => deleteDoc(doc(db, 'paymentMethods', id))} 
-        onUpdateMethodFee={(id, f) => updateDoc(doc(db, 'paymentMethods', id), { feePercent: f })} 
-        onUpdateCompanyInfo={(info) => setDoc(doc(db, 'settings', 'global'), info)} 
+        onAddMethod={(n, f) => setPaymentMethods([...paymentMethods, {id: Math.random().toString(), name: n, feePercent: f, icon: '💰'}])} 
+        onRemoveMethod={(id) => setPaymentMethods(paymentMethods.filter(p => p.id !== id))} 
+        onUpdateMethodFee={(id, f) => setPaymentMethods(paymentMethods.map(p => p.id === id ? {...p, feePercent: f} : p))} 
+        onUpdateCompanyInfo={setCompanyInfo} 
       />;
       default: return null;
     }
   };
-
-  if (firebaseError) {
-    return (
-      <div className="h-screen w-screen flex items-center justify-center bg-slate-950 p-4 text-center">
-        <div className="bg-red-900/20 border border-red-500/50 p-8 rounded-3xl max-w-md">
-          <div className="text-4xl mb-4">⚠️</div>
-          <h2 className="text-xl font-bold text-white mb-2">Erro de Configuração</h2>
-          <p className="text-slate-400 text-sm mb-6">{firebaseError}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="px-6 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-all"
-          >
-            Tentar Novamente
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   if (!isAuthenticated) return <LoginView onLogin={handleLogin} />;
 
