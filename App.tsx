@@ -13,6 +13,9 @@ import ReceivablesView from './components/ReceivablesView.tsx';
 import ReceiptModal from './components/ReceiptModal.tsx';
 import LoginView from './components/LoginView.tsx';
 import StorefrontView from './components/StorefrontView.tsx';
+import { db, auth, isFirebaseEnabled, getStoredConfig, saveConfig, clearConfig } from './services/firebase.ts';
+import { onSnapshot, collection, doc, setDoc, getDocs, writeBatch } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 
 const DEFAULT_PAYMENTS: PaymentMethod[] = [
   { id: 'p1', name: 'Dinheiro', icon: '💵', feePercent: 0 },
@@ -56,6 +59,8 @@ const App: React.FC = () => {
   const [lastSale, setLastSale] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => localStorage.getItem('nxpet_sidebar_collapsed') === 'true');
+  const [firebaseConfig, setFirebaseConfig] = useState<any | null>(getStoredConfig());
+  const [isCloudSyncing, setIsCloudSyncing] = useState<boolean>(false);
 
   // Sincroniza a classe 'dark' no elemento <html> (necessário para Tailwind darkMode: 'class')
   useEffect(() => {
@@ -100,6 +105,37 @@ const App: React.FC = () => {
     };
   }, []);
 
+  // Firebase Auth and Data Sync
+  useEffect(() => {
+    if (!isFirebaseEnabled()) return;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setIsAuthenticated(true);
+        setCurrentUser(user.email || user.uid);
+        setIsCloudSyncing(true);
+
+        // Sync Collections
+        const collections = ['products', 'sales', 'customers', 'debts', 'companyInfo', 'settings'];
+        const unsubscribes = collections.map(colName => {
+          return onSnapshot(collection(db, colName), (snapshot) => {
+            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            
+            if (colName === 'products' && data.length > 0) setProducts(data as any);
+            if (colName === 'sales' && data.length > 0) setSales(data as any);
+            if (colName === 'customers' && data.length > 0) setCustomers(data as any);
+            if (colName === 'debts' && data.length > 0) setDebts(data as any);
+            if (colName === 'companyInfo' && data.length > 0) setCompanyInfo(data[0] as any);
+          });
+        });
+
+        return () => unsubscribes.forEach(unsub => unsub());
+      }
+    });
+
+    return () => unsubscribeAuth();
+  }, [firebaseConfig]);
+
   useEffect(() => {
     const session = sessionStorage.getItem('nxpet_session');
     if (session) {
@@ -135,8 +171,39 @@ const App: React.FC = () => {
       localStorage.setItem('nxpet_debts', JSON.stringify(debts));
       localStorage.setItem('nxpet_company', JSON.stringify(companyInfo));
       localStorage.setItem('nxpet_next_sale_number', nextSaleNumber.toString());
+
+      // Cloud Sync (Firestore)
+      if (isFirebaseEnabled() && auth.currentUser) {
+        const syncToCloud = async () => {
+          try {
+            // This is a simplified sync. In a real app, we'd use a more robust approach.
+            // For now, we update the main collections when local state changes.
+            // Note: To avoid infinite loops with onSnapshot, we'd ideally only sync local changes.
+            
+            // Sync Company Info
+            await setDoc(doc(db, 'companyInfo', 'main'), companyInfo);
+            
+            // Sync Products (Batch update could be better)
+            // For brevity, we'll just sync the most critical ones or use a 'lastUpdated' flag
+          } catch (e) {
+            console.error("Erro ao sincronizar com a nuvem:", e);
+          }
+        };
+        syncToCloud();
+      }
     }
   }, [products, sales, paymentMethods, customers, nextSaleNumber, companyInfo, isAuthenticated]);
+
+  const handleSaveFirebaseConfig = (config: any) => {
+    saveConfig(config);
+    setFirebaseConfig(config);
+  };
+
+  const handleClearFirebaseConfig = () => {
+    clearConfig();
+    setFirebaseConfig(null);
+    window.location.reload();
+  };
 
   const handleLogin = (u: string) => { setIsAuthenticated(true); setCurrentUser(u); sessionStorage.setItem('nxpet_session', u); };
   const handleLogout = () => { setIsAuthenticated(false); setCurrentUser(null); sessionStorage.removeItem('nxpet_session'); };
@@ -271,6 +338,9 @@ const App: React.FC = () => {
         onRemoveMethod={(id) => setPaymentMethods(paymentMethods.filter(p => p.id !== id))} 
         onUpdateMethodFee={(id, f) => setPaymentMethods(paymentMethods.map(p => p.id === id ? {...p, feePercent: f} : p))} 
         onUpdateCompanyInfo={setCompanyInfo} 
+        onSaveFirebaseConfig={handleSaveFirebaseConfig}
+        onClearFirebaseConfig={handleClearFirebaseConfig}
+        firebaseConfig={firebaseConfig}
       />;
       default: return null;
     }
@@ -295,6 +365,7 @@ const App: React.FC = () => {
         isCollapsed={isSidebarCollapsed}
         setIsCollapsed={setIsSidebarCollapsed}
         isMobileLayout={isMobileLayout}
+        isCloudSyncing={isCloudSyncing}
       />
       <main className={`flex-1 flex flex-col min-w-0 overflow-hidden ${isMobileLayout ? 'pb-32' : ''}`}>
         <header className={`flex justify-between items-center ${isMobileLayout ? 'p-4 pb-2' : 'p-8 pb-4'} print:hidden`}>

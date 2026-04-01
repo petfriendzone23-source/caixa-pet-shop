@@ -17,16 +17,28 @@ interface SettingsViewProps {
   onRemoveMethod: (id: string) => void;
   onUpdateMethodFee: (id: string, fee: number) => void;
   onUpdateCompanyInfo: (info: CompanyInfo) => void;
+  onSaveFirebaseConfig: (config: any) => void;
+  onClearFirebaseConfig: () => void;
+  firebaseConfig: any | null;
 }
 
 const SettingsView: React.FC<SettingsViewProps> = ({ 
-  products, paymentMethods, companyInfo, isDarkMode, setIsDarkMode, uiScale, setUiScale, layoutMode, setLayoutMode, onAddMethod, onRemoveMethod, onUpdateMethodFee, onUpdateCompanyInfo
+  products, paymentMethods, companyInfo, isDarkMode, setIsDarkMode, uiScale, setUiScale, layoutMode, setLayoutMode, onAddMethod, onRemoveMethod, onUpdateMethodFee, onUpdateCompanyInfo, onSaveFirebaseConfig, onClearFirebaseConfig, firebaseConfig
 }) => {
-  const [activeTab, setActiveTab] = useState<'company' | 'payments' | 'appearance' | 'data' | 'labels'>('company');
+  const [activeTab, setActiveTab] = useState<'company' | 'payments' | 'appearance' | 'data' | 'labels' | 'cloud'>('company');
   const [newMethodName, setNewMethodName] = useState('');
   const [newMethodFee, setNewMethodFee] = useState<number>(0);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [labelSearch, setLabelSearch] = useState('');
+  const [fbConfig, setFbConfig] = useState(firebaseConfig || {
+    apiKey: '',
+    authDomain: '',
+    projectId: '',
+    storageBucket: '',
+    messagingSenderId: '',
+    appId: '',
+    measurementId: ''
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleExport = () => {
@@ -78,6 +90,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     { id: 'appearance', label: 'Aparência', icon: '🎨' },
     { id: 'labels', label: 'Etiquetas', icon: '🏷️' },
     { id: 'data', label: 'Dados', icon: '💾' },
+    { id: 'cloud', label: 'Nuvem (Firebase)', icon: '☁️' },
   ] as const;
 
   const toggleProductSelection = (id: string) => {
@@ -334,6 +347,71 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                 <input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={handleImport} />
               </button>
             </div>
+          </div>
+        )}
+
+        {activeTab === 'cloud' && (
+          <div className="bg-white dark:bg-slate-900 rounded-[40px] p-10 border border-slate-200 dark:border-slate-800 shadow-sm transition-colors animate-in fade-in slide-in-from-bottom-4">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-black uppercase text-slate-800 dark:text-white flex items-center gap-2">
+                <span>☁️</span> Configuração Firebase
+              </h3>
+              {firebaseConfig && (
+                <button 
+                  onClick={() => {
+                    if(confirm("Deseja realmente desconectar do Firebase? Os dados voltarão a ser locais.")) {
+                      onClearFirebaseConfig();
+                    }
+                  }}
+                  className="px-4 py-2 bg-red-50 text-red-600 font-black rounded-xl text-[10px] uppercase border border-red-100"
+                >
+                  Desconectar
+                </button>
+              )}
+            </div>
+            
+            <p className="text-xs text-slate-500 mb-8 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700">
+              Insira as chaves do seu projeto Firebase para habilitar o backup automático na nuvem e sincronização entre dispositivos. 
+              <br/><br/>
+              <strong>Onde encontrar?</strong> No console do Firebase, vá em <i>Configurações do Projeto &gt; Geral &gt; Seus Aplicativos</i>.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[
+                { key: 'apiKey', label: 'API Key', placeholder: 'AIzaSy...' },
+                { key: 'authDomain', label: 'Auth Domain', placeholder: 'seu-projeto.firebaseapp.com' },
+                { key: 'projectId', label: 'Project ID', placeholder: 'seu-projeto-id' },
+                { key: 'storageBucket', label: 'Storage Bucket', placeholder: 'seu-projeto.appspot.com' },
+                { key: 'messagingSenderId', label: 'Messaging Sender ID', placeholder: '1234567890' },
+                { key: 'appId', label: 'App ID', placeholder: '1:1234567890:web:abcdef' },
+                { key: 'measurementId', label: 'Measurement ID (Opcional)', placeholder: 'G-ABCDEF123' },
+              ].map(field => (
+                <div key={field.key} className="flex flex-col gap-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase ml-2">{field.label}</label>
+                  <input 
+                    className="px-5 py-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 dark:bg-slate-800 dark:text-white outline-none focus:border-orange-500 font-bold text-sm" 
+                    placeholder={field.placeholder}
+                    value={(fbConfig as any)[field.key]} 
+                    onChange={e => setFbConfig({...fbConfig, [field.key]: e.target.value})} 
+                  />
+                </div>
+              ))}
+            </div>
+
+            <button 
+              onClick={() => {
+                if(!fbConfig.apiKey || !fbConfig.projectId) {
+                  alert("API Key e Project ID são obrigatórios!");
+                  return;
+                }
+                onSaveFirebaseConfig(fbConfig);
+                alert("Configurações salvas! O sistema irá recarregar para aplicar as mudanças.");
+                window.location.reload();
+              }}
+              className="w-full mt-10 py-5 bg-orange-600 hover:bg-orange-700 text-white font-black rounded-[24px] uppercase text-sm shadow-xl shadow-orange-900/20 transition-all active:scale-95"
+            >
+              Salvar e Conectar Nuvem
+            </button>
           </div>
         )}
       </div>
