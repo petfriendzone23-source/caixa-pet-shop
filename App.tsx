@@ -107,6 +107,8 @@ const App: React.FC = () => {
 
   // Firebase Auth and Data Sync
   useEffect(() => {
+    if (!auth || !db) return;
+    
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
         setIsAuthenticated(true);
@@ -116,7 +118,7 @@ const App: React.FC = () => {
         // Sync Collections
         const collections = ['products', 'sales', 'customers', 'debts', 'companyInfo'];
         const unsubscribes = collections.map(colName => {
-          return onSnapshot(collection(db, colName), (snapshot) => {
+          return onSnapshot(collection(db!, colName), (snapshot) => {
             if (snapshot.metadata.hasPendingWrites) return; // Ignore local changes
             
             isSyncingFromCloud.current = true;
