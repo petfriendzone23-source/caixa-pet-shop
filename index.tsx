@@ -2,7 +2,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
-import './index.css';
 
 // Suprimir avisos de deprecation do Recharts (defaultProps em componentes de função)
 const error = console.error;

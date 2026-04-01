@@ -1,11 +1,30 @@
 
-const CACHE_NAME = 'nexuspet-offline-v4';
+const CACHE_NAME = 'nexuspet-offline-v3';
 
-// Lista simplificada para o cache inicial
+// Lista completa de arquivos locais e dependências externas para serem salvos para uso offline
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
+  '/index.tsx',
   '/manifest.json',
+  '/types.ts',
+  '/constants.ts',
+  '/App.tsx',
+  '/components/Sidebar.tsx',
+  '/components/POSView.tsx',
+  '/components/InventoryView.tsx',
+  '/components/DashboardView.tsx',
+  '/components/SettingsView.tsx',
+  '/components/CustomerView.tsx',
+  '/components/SalesHistoryView.tsx',
+  '/components/ReceiptModal.tsx',
+  '/components/LoginView.tsx',
+  // Dependências Externas (CDNs) - Crucial para funcionar sem internet
+  'https://cdn.tailwindcss.com',
+  'https://esm.sh/react@18.3.1',
+  'https://esm.sh/react-dom@18.3.1',
+  'https://esm.sh/react@18.3.1/jsx-runtime',
+  'https://esm.sh/recharts@2.12.7?external=react,react-dom',
   'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Libre+Barcode+128&family=Inconsolata:wght@400;700&display=swap'
 ];
 
