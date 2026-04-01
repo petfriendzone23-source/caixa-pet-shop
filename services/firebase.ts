@@ -1,7 +1,7 @@
 
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
+import { getAuth, Auth } from 'firebase/auth';
+import { getFirestore, Firestore } from 'firebase/firestore';
 
 export interface FirebaseConfig {
   apiKey: string;
@@ -19,7 +19,9 @@ export const getStoredConfig = (): FirebaseConfig | null => {
   const stored = localStorage.getItem(STORAGE_KEY);
   if (!stored) return null;
   try {
-    return JSON.parse(stored);
+    const parsed = JSON.parse(stored);
+    if (parsed && parsed.apiKey && parsed.projectId) return parsed;
+    return null;
   } catch (e) {
     return null;
   }
@@ -35,13 +37,12 @@ export const clearConfig = () => {
 
 const config = getStoredConfig();
 
-let app;
-let auth: any = null;
-let db: any = null;
+let auth: Auth | null = null;
+let db: Firestore | null = null;
 
-if (config && config.apiKey) {
+if (config) {
   try {
-    app = getApps().length === 0 ? initializeApp(config) : getApp();
+    const app = getApps().length === 0 ? initializeApp(config) : getApp();
     auth = getAuth(app);
     db = getFirestore(app);
   } catch (error) {

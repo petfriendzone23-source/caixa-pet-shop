@@ -61,6 +61,7 @@ const App: React.FC = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => localStorage.getItem('nxpet_sidebar_collapsed') === 'true');
   const [firebaseConfig, setFirebaseConfig] = useState<any | null>(getStoredConfig());
   const [isCloudSyncing, setIsCloudSyncing] = useState<boolean>(false);
+  const isSyncingFromCloud = React.useRef(false);
 
   // Sincroniza a classe 'dark' no elemento <html> (necessário para Tailwind darkMode: 'class')
   useEffect(() => {
@@ -116,9 +117,12 @@ const App: React.FC = () => {
         setIsCloudSyncing(true);
 
         // Sync Collections
-        const collections = ['products', 'sales', 'customers', 'debts', 'companyInfo', 'settings'];
+        const collections = ['products', 'sales', 'customers', 'debts', 'companyInfo'];
         const unsubscribes = collections.map(colName => {
-          return onSnapshot(collection(db, colName), (snapshot) => {
+          return onSnapshot(collection(db!, colName), (snapshot) => {
+            if (snapshot.metadata.hasPendingWrites) return; // Ignore local changes
+            
+            isSyncingFromCloud.current = true;
             const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             
             if (colName === 'products' && data.length > 0) setProducts(data as any);
@@ -126,6 +130,8 @@ const App: React.FC = () => {
             if (colName === 'customers' && data.length > 0) setCustomers(data as any);
             if (colName === 'debts' && data.length > 0) setDebts(data as any);
             if (colName === 'companyInfo' && data.length > 0) setCompanyInfo(data[0] as any);
+            
+            setTimeout(() => { isSyncingFromCloud.current = false; }, 100);
           });
         });
 
@@ -173,18 +179,11 @@ const App: React.FC = () => {
       localStorage.setItem('nxpet_next_sale_number', nextSaleNumber.toString());
 
       // Cloud Sync (Firestore)
-      if (isFirebaseEnabled() && auth.currentUser) {
+      if (isFirebaseEnabled() && auth!.currentUser && !isSyncingFromCloud.current) {
         const syncToCloud = async () => {
           try {
-            // This is a simplified sync. In a real app, we'd use a more robust approach.
-            // For now, we update the main collections when local state changes.
-            // Note: To avoid infinite loops with onSnapshot, we'd ideally only sync local changes.
-            
-            // Sync Company Info
-            await setDoc(doc(db, 'companyInfo', 'main'), companyInfo);
-            
-            // Sync Products (Batch update could be better)
-            // For brevity, we'll just sync the most critical ones or use a 'lastUpdated' flag
+            // Only sync company info for now to avoid loop issues
+            await setDoc(doc(db!, 'companyInfo', 'main'), companyInfo);
           } catch (e) {
             console.error("Erro ao sincronizar com a nuvem:", e);
           }
@@ -346,7 +345,19 @@ const App: React.FC = () => {
     }
   };
 
-  if (!isAuthenticated) return <LoginView onLogin={handleLogin} />;
+  if (!isAuthenticated) return (
+    <div className="relative">
+      <LoginView onLogin={handleLogin} />
+      {firebaseConfig && (
+        <button 
+          onClick={handleClearFirebaseConfig}
+          className="fixed bottom-4 right-4 px-4 py-2 bg-red-600 text-white text-[10px] font-black uppercase rounded-xl shadow-xl z-[9999]"
+        >
+          Resetar Firebase (Emergência)
+        </button>
+      )}
+    </div>
+  );
 
   if (currentView === 'storefront') {
     return (
