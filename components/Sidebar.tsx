@@ -9,9 +9,10 @@ interface SidebarProps {
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
   isMobileLayout?: boolean;
+  isCloudSyncing?: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout, isCollapsed, setIsCollapsed, isMobileLayout }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout, isCollapsed, setIsCollapsed, isMobileLayout, isCloudSyncing }) => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
@@ -96,9 +97,17 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, onLogout, isCol
         </div>
         
         {!isCollapsed && (
-          <div className="mt-2 flex items-center gap-2">
-            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Sistema Ativo</span>
+          <div className="mt-2 flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Sistema Ativo</span>
+            </div>
+            {isCloudSyncing && (
+              <div className="flex items-center gap-2">
+                <span className="text-blue-500 text-xs">☁️</span>
+                <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Nuvem Conectada</span>
+              </div>
+            )}
           </div>
         )}
       </div>
