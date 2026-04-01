@@ -13,9 +13,9 @@ import ReceivablesView from './components/ReceivablesView.tsx';
 import ReceiptModal from './components/ReceiptModal.tsx';
 import LoginView from './components/LoginView.tsx';
 import StorefrontView from './components/StorefrontView.tsx';
-import { db, auth, isFirebaseEnabled, getStoredConfig, saveConfig, clearConfig } from './services/firebase.ts';
-import { onSnapshot, collection, doc, setDoc, getDocs, writeBatch } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
+import { db, auth } from './services/firebase.ts';
+import { onSnapshot, collection, doc, setDoc } from 'firebase/firestore';
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
 
 const DEFAULT_PAYMENTS: PaymentMethod[] = [
   { id: 'p1', name: 'Dinheiro', icon: '💵', feePercent: 0 },
@@ -59,7 +59,6 @@ const App: React.FC = () => {
   const [lastSale, setLastSale] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => localStorage.getItem('nxpet_sidebar_collapsed') === 'true');
-  const [firebaseConfig, setFirebaseConfig] = useState<any | null>(getStoredConfig());
   const [isCloudSyncing, setIsCloudSyncing] = useState<boolean>(false);
   const isSyncingFromCloud = React.useRef(false);
 
@@ -108,8 +107,6 @@ const App: React.FC = () => {
 
   // Firebase Auth and Data Sync
   useEffect(() => {
-    if (!isFirebaseEnabled()) return;
-
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
         setIsAuthenticated(true);
@@ -119,28 +116,32 @@ const App: React.FC = () => {
         // Sync Collections
         const collections = ['products', 'sales', 'customers', 'debts', 'companyInfo'];
         const unsubscribes = collections.map(colName => {
-          return onSnapshot(collection(db!, colName), (snapshot) => {
+          return onSnapshot(collection(db, colName), (snapshot) => {
             if (snapshot.metadata.hasPendingWrites) return; // Ignore local changes
             
             isSyncingFromCloud.current = true;
             const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             
-            if (colName === 'products' && data.length > 0) setProducts(data as any);
-            if (colName === 'sales' && data.length > 0) setSales(data as any);
-            if (colName === 'customers' && data.length > 0) setCustomers(data as any);
-            if (colName === 'debts' && data.length > 0) setDebts(data as any);
-            if (colName === 'companyInfo' && data.length > 0) setCompanyInfo(data[0] as any);
+            if (data.length > 0) {
+              if (colName === 'products') setProducts(data as any);
+              if (colName === 'sales') setSales(data as any);
+              if (colName === 'customers') setCustomers(data as any);
+              if (colName === 'debts') setDebts(data as any);
+              if (colName === 'companyInfo') setCompanyInfo(data[0] as any);
+            }
             
             setTimeout(() => { isSyncingFromCloud.current = false; }, 100);
           });
         });
 
         return () => unsubscribes.forEach(unsub => unsub());
+      } else {
+        setIsCloudSyncing(false);
       }
     });
 
     return () => unsubscribeAuth();
-  }, [firebaseConfig]);
+  }, []);
 
   useEffect(() => {
     const session = sessionStorage.getItem('nxpet_session');
@@ -179,11 +180,10 @@ const App: React.FC = () => {
       localStorage.setItem('nxpet_next_sale_number', nextSaleNumber.toString());
 
       // Cloud Sync (Firestore)
-      if (isFirebaseEnabled() && auth!.currentUser && !isSyncingFromCloud.current) {
+      if (auth.currentUser && !isSyncingFromCloud.current) {
         const syncToCloud = async () => {
           try {
-            // Only sync company info for now to avoid loop issues
-            await setDoc(doc(db!, 'companyInfo', 'main'), companyInfo);
+            await setDoc(doc(db, 'companyInfo', 'main'), companyInfo);
           } catch (e) {
             console.error("Erro ao sincronizar com a nuvem:", e);
           }
@@ -193,19 +193,24 @@ const App: React.FC = () => {
     }
   }, [products, sales, paymentMethods, customers, nextSaleNumber, companyInfo, isAuthenticated]);
 
-  const handleSaveFirebaseConfig = (config: any) => {
-    saveConfig(config);
-    setFirebaseConfig(config);
+  const handleLogin = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      console.error("Erro no login:", error);
+      // Fallback para login local se o Firebase falhar
+      setIsAuthenticated(true);
+      setCurrentUser('Usuário Local');
+    }
   };
 
-  const handleClearFirebaseConfig = () => {
-    clearConfig();
-    setFirebaseConfig(null);
-    window.location.reload();
+  const handleLogout = () => {
+    signOut(auth);
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+    sessionStorage.removeItem('nxpet_session');
   };
-
-  const handleLogin = (u: string) => { setIsAuthenticated(true); setCurrentUser(u); sessionStorage.setItem('nxpet_session', u); };
-  const handleLogout = () => { setIsAuthenticated(false); setCurrentUser(null); sessionStorage.removeItem('nxpet_session'); };
 
   const handleCompleteSale = (sale: Sale) => {
     const isEdit = sales.some(s => s.id === sale.id);
@@ -337,27 +342,12 @@ const App: React.FC = () => {
         onRemoveMethod={(id) => setPaymentMethods(paymentMethods.filter(p => p.id !== id))} 
         onUpdateMethodFee={(id, f) => setPaymentMethods(paymentMethods.map(p => p.id === id ? {...p, feePercent: f} : p))} 
         onUpdateCompanyInfo={setCompanyInfo} 
-        onSaveFirebaseConfig={handleSaveFirebaseConfig}
-        onClearFirebaseConfig={handleClearFirebaseConfig}
-        firebaseConfig={firebaseConfig}
       />;
       default: return null;
     }
   };
 
-  if (!isAuthenticated) return (
-    <div className="relative">
-      <LoginView onLogin={handleLogin} />
-      {firebaseConfig && (
-        <button 
-          onClick={handleClearFirebaseConfig}
-          className="fixed bottom-4 right-4 px-4 py-2 bg-red-600 text-white text-[10px] font-black uppercase rounded-xl shadow-xl z-[9999]"
-        >
-          Resetar Firebase (Emergência)
-        </button>
-      )}
-    </div>
-  );
+  if (!isAuthenticated) return <LoginView onLogin={handleLogin} />;
 
   if (currentView === 'storefront') {
     return (
