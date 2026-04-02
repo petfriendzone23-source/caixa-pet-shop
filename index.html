@@ -175,7 +175,31 @@
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(registration => {
             console.log('NexusPet: Offline Active');
+            
+            // Detecta atualizações do Service Worker
+            registration.onupdatefound = () => {
+              const installingWorker = registration.installing;
+              if (installingWorker) {
+                installingWorker.onstatechange = () => {
+                  if (installingWorker.state === 'installed') {
+                    if (navigator.serviceWorker.controller) {
+                      // Novo conteúdo disponível, o SW vai pular a espera e ativar
+                      console.log('NexusPet: Nova versão instalada. Recarregando...');
+                    }
+                  }
+                };
+              }
+            };
           });
+        });
+
+        // Recarrega a página quando o novo Service Worker assume o controle
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!refreshing) {
+            refreshing = true;
+            window.location.reload();
+          }
         });
       }
     </script>

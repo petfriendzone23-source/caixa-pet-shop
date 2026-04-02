@@ -1,5 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
+import { auth, db } from '../src/firebase.ts';
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  sendPasswordResetEmail,
+  updateProfile
+} from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 interface LoginViewProps {
   onLogin: (username: string) => void;
@@ -8,111 +16,78 @@ interface LoginViewProps {
 const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [isRecovering, setIsRecovering] = useState(false);
+  const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [securityWord, setSecurityWord] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [savedUsersList, setSavedUsersList] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    try {
-      const savedUsersStr = localStorage.getItem('nxpet_users');
-      if (!savedUsersStr || savedUsersStr === '[]') {
-        setIsRegistering(true);
-      } else {
-        const users = JSON.parse(savedUsersStr);
-        setSavedUsersList(users);
-        const lastUser = localStorage.getItem('nxpet_last_user');
-        if (lastUser && users.find((u: any) => u.username === lastUser)) {
-          setUsername(lastUser);
-        } else if (users.length > 0) {
-          setUsername(users[0].username);
-        }
-      }
-    } catch (e) {
-      setIsRegistering(true);
-    }
-  }, []);
-
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess('');
-    if (password !== confirmPassword) { setError('As senhas não coincidem.'); return; }
-    if (password.length < 4) { setError('A senha deve ter pelo menos 4 caracteres.'); return; }
-    if (!securityWord) { setError('A palavra-chave de segurança é obrigatória.'); return; }
+    setIsLoading(true);
+
+    if (password !== confirmPassword) { setError('As senhas não coincidem.'); setIsLoading(false); return; }
+    if (password.length < 6) { setError('A senha deve ter pelo menos 6 caracteres.'); setIsLoading(false); return; }
     
     try {
-      const savedUsersStr = localStorage.getItem('nxpet_users');
-      const users = savedUsersStr ? JSON.parse(savedUsersStr) : [];
-      if (users.find((u: any) => u.username === username)) {
-        setError('Este usuário já existe.'); return;
-      }
-      const newUser = { username, password, securityWord: securityWord.toLowerCase().trim() };
-      users.push(newUser);
-      localStorage.setItem('nxpet_users', JSON.stringify(users));
-      setSavedUsersList(users);
-      setIsRegistering(false);
-      setPassword('');
-      setConfirmPassword('');
-      setSecurityWord('');
-      setSuccess('Usuário criado com sucesso! Faça login.');
-    } catch (e) { setError('Erro ao salvar usuário.'); }
-  };
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-    try {
-      const savedUsersStr = localStorage.getItem('nxpet_users');
-      if (!savedUsersStr) { setError('Nenhum usuário cadastrado.'); return; }
-      const users = JSON.parse(savedUsersStr);
-      const user = users.find((u: any) => u.username === username && u.password === password);
-      if (user) { 
-        localStorage.setItem('nxpet_last_user', username);
-        onLogin(username); 
-      } else { 
-        setError('Credenciais inválidas.'); 
-      }
-    } catch (e) { setError('Erro interno.'); }
-  };
-
-  const handleRecover = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-    if (password !== confirmPassword) { setError('As senhas não coincidem.'); return; }
-    if (password.length < 4) { setError('A senha deve ter pelo menos 4 caracteres.'); return; }
-    
-    try {
-      const savedUsersStr = localStorage.getItem('nxpet_users');
-      if (!savedUsersStr) { setError('Nenhum usuário cadastrado.'); return; }
-      let users = JSON.parse(savedUsersStr);
-      const userIndex = users.findIndex((u: any) => u.username === username);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
       
-      if (userIndex !== -1) {
-        const user = users[userIndex];
-        const storedWord = user.securityWord || 'nexus'; // Fallback para usuários antigos
-        
-        if (securityWord.toLowerCase().trim() !== storedWord) {
-          setError('Palavra-chave de segurança incorreta.');
-          return;
-        }
-        
-        users[userIndex].password = password;
-        localStorage.setItem('nxpet_users', JSON.stringify(users));
-        setIsRecovering(false);
-        setPassword('');
-        setConfirmPassword('');
-        setSecurityWord('');
-        setSuccess('Senha redefinida com sucesso! Faça login.');
-      } else {
-        setError('Usuário não encontrado.');
-      }
-    } catch (e) { setError('Erro ao redefinir senha.'); }
+      // Salva perfil no Firestore
+      await setDoc(doc(db, 'users', user.uid), {
+        uid: user.uid,
+        username: username,
+        email: email,
+        role: 'admin', // Primeiro usuário como admin
+        createdAt: Date.now()
+      });
+
+      await updateProfile(user, { displayName: username });
+      
+      setSuccess('Conta criada com sucesso!');
+      setIsRegistering(false);
+    } catch (e: any) { 
+      setError(e.message || 'Erro ao criar conta.'); 
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    setIsLoading(true);
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      onLogin(auth.currentUser?.displayName || email);
+    } catch (e: any) { 
+      setError('E-mail ou senha inválidos.'); 
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRecover = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    setIsLoading(true);
+    
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setSuccess('E-mail de recuperação enviado! Verifique sua caixa de entrada.');
+      setIsRecovering(false);
+    } catch (e: any) { 
+      setError('Erro ao enviar e-mail de recuperação.'); 
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -146,73 +121,46 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
 
             <div className="space-y-4">
               <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Usuário</label>
+                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">E-mail</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">👤</span>
-                  {(!isRegistering && savedUsersList.length > 0) ? (
-                    <select 
-                      required 
-                      className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 focus:border-orange-500 dark:bg-slate-800 dark:text-white outline-none transition-all font-bold appearance-none"
-                      value={username} 
-                      onChange={e => setUsername(e.target.value)}
-                    >
-                      {savedUsersList.map(u => (
-                        <option key={u.username} value={u.username}>{u.username}</option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input 
-                      required type="text" 
-                      className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 focus:border-orange-500 dark:bg-slate-800 dark:text-white outline-none transition-all font-bold"
-                      placeholder="Seu usuário" value={username} onChange={e => setUsername(e.target.value)}
-                    />
-                  )}
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">📧</span>
+                  <input 
+                    required type="email" 
+                    className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 focus:border-orange-500 dark:bg-slate-800 dark:text-white outline-none transition-all font-bold"
+                    placeholder="Seu e-mail" value={email} onChange={e => setEmail(e.target.value)}
+                  />
                 </div>
               </div>
 
-              {isRecovering && (
+              {isRegistering && (
                 <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Palavra-chave de Segurança</label>
+                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Nome de Usuário</label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">🔑</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">👤</span>
                     <input 
                       required type="text" 
                       className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 focus:border-orange-500 dark:bg-slate-800 dark:text-white outline-none transition-all font-bold"
-                      placeholder="Sua palavra secreta (Padrão: nexus)" value={securityWord} onChange={e => setSecurityWord(e.target.value)}
+                      placeholder="Como quer ser chamado" value={username} onChange={e => setUsername(e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {!isRecovering && (
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Senha</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">🔒</span>
+                    <input 
+                      required type="password" 
+                      className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 focus:border-orange-500 dark:bg-slate-800 dark:text-white outline-none transition-all font-bold"
+                      placeholder="Sua senha" value={password} onChange={e => setPassword(e.target.value)}
                     />
                   </div>
                 </div>
               )}
 
               {isRegistering && (
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Palavra-chave de Segurança</label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">🔑</span>
-                    <input 
-                      required type="text" 
-                      className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 focus:border-orange-500 dark:bg-slate-800 dark:text-white outline-none transition-all font-bold"
-                      placeholder="Para recuperar a senha depois" value={securityWord} onChange={e => setSecurityWord(e.target.value)}
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">
-                  {isRecovering ? 'Nova Senha' : 'Senha'}
-                </label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">🔒</span>
-                  <input 
-                    required type="password" 
-                    className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 focus:border-orange-500 dark:bg-slate-800 dark:text-white outline-none transition-all font-bold"
-                    placeholder={isRecovering ? 'Sua nova senha' : 'Sua senha'} value={password} onChange={e => setPassword(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {(isRegistering || isRecovering) && (
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Confirmar Senha</label>
                   <div className="relative">
@@ -229,29 +177,30 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
 
             <button 
               type="submit"
-              className="w-full py-5 bg-orange-600 text-white rounded-2xl font-black text-lg hover:bg-orange-700 shadow-xl shadow-orange-900/20 transition-all active:scale-95 flex items-center justify-center gap-3"
+              disabled={isLoading}
+              className="w-full py-5 bg-orange-600 text-white rounded-2xl font-black text-lg hover:bg-orange-700 shadow-xl shadow-orange-900/20 transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
             >
-              {isRegistering ? 'CRIAR CONTA' : isRecovering ? 'REDEFINIR SENHA' : 'ACESSAR AGORA'}
-              <span className="text-xl">➔</span>
+              {isLoading ? 'CARREGANDO...' : isRegistering ? 'CRIAR CONTA' : isRecovering ? 'ENVIAR E-MAIL' : 'ACESSAR AGORA'}
+              {!isLoading && <span className="text-xl">➔</span>}
             </button>
 
             {!isRegistering && !isRecovering && (
               <div className="flex justify-between items-center mt-4 text-xs font-bold text-slate-500">
-                <button type="button" onClick={() => { setIsRecovering(true); setError(''); setSuccess(''); setPassword(''); setSecurityWord(''); }} className="hover:text-orange-500 transition-colors">Esqueci minha senha</button>
-                <button type="button" onClick={() => { setIsRegistering(true); setError(''); setSuccess(''); setUsername(''); setPassword(''); setSecurityWord(''); }} className="hover:text-orange-500 transition-colors">Criar nova conta</button>
+                <button type="button" onClick={() => { setIsRecovering(true); setError(''); setSuccess(''); setPassword(''); }} className="hover:text-orange-500 transition-colors">Esqueci minha senha</button>
+                <button type="button" onClick={() => { setIsRegistering(true); setError(''); setSuccess(''); setUsername(''); setPassword(''); }} className="hover:text-orange-500 transition-colors">Criar nova conta</button>
               </div>
             )}
 
-            {(isRegistering || isRecovering) && savedUsersList.length > 0 && (
+            {(isRegistering || isRecovering) && (
               <div className="mt-4 text-center text-xs font-bold text-slate-500">
-                <button type="button" onClick={() => { setIsRegistering(false); setIsRecovering(false); setError(''); setSuccess(''); setPassword(''); setConfirmPassword(''); setSecurityWord(''); }} className="hover:text-orange-500 transition-colors">Voltar para o Login</button>
+                <button type="button" onClick={() => { setIsRegistering(false); setIsRecovering(false); setError(''); setSuccess(''); setPassword(''); setConfirmPassword(''); }} className="hover:text-orange-500 transition-colors">Voltar para o Login</button>
               </div>
             )}
           </form>
         </div>
         
         <div className="mt-8 text-center text-slate-600 text-[10px] font-black uppercase tracking-[0.2em] opacity-40">
-          NexusPet PDV &copy; 2024 - Offline Professional Edition
+          NexusPet PDV &copy; 2024 - Cloud Real-time Edition
         </div>
       </div>
     </div>

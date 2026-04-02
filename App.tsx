@@ -13,6 +13,9 @@ import ReceivablesView from './components/ReceivablesView.tsx';
 import ReceiptModal from './components/ReceiptModal.tsx';
 import LoginView from './components/LoginView.tsx';
 import StorefrontView from './components/StorefrontView.tsx';
+import { db, auth } from './services/firebase.ts';
+import { onSnapshot, collection, doc, setDoc } from 'firebase/firestore';
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
 
 const DEFAULT_PAYMENTS: PaymentMethod[] = [
   { id: 'p1', name: 'Dinheiro', icon: '💵', feePercent: 0 },
@@ -56,6 +59,8 @@ const App: React.FC = () => {
   const [lastSale, setLastSale] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => localStorage.getItem('nxpet_sidebar_collapsed') === 'true');
+  const [isCloudSyncing, setIsCloudSyncing] = useState<boolean>(false);
+  const isSyncingFromCloud = React.useRef(false);
 
   // Sincroniza a classe 'dark' no elemento <html> (necessário para Tailwind darkMode: 'class')
   useEffect(() => {
@@ -100,6 +105,46 @@ const App: React.FC = () => {
     };
   }, []);
 
+  // Firebase Auth and Data Sync
+  useEffect(() => {
+    if (!auth || !db) return;
+    
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setIsAuthenticated(true);
+        setCurrentUser(user.email || user.uid);
+        setIsCloudSyncing(true);
+
+        // Sync Collections
+        const collections = ['products', 'sales', 'customers', 'debts', 'companyInfo'];
+        const unsubscribes = collections.map(colName => {
+          return onSnapshot(collection(db!, colName), (snapshot) => {
+            if (snapshot.metadata.hasPendingWrites) return; // Ignore local changes
+            
+            isSyncingFromCloud.current = true;
+            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            
+            if (data.length > 0) {
+              if (colName === 'products') setProducts(data as any);
+              if (colName === 'sales') setSales(data as any);
+              if (colName === 'customers') setCustomers(data as any);
+              if (colName === 'debts') setDebts(data as any);
+              if (colName === 'companyInfo') setCompanyInfo(data[0] as any);
+            }
+            
+            setTimeout(() => { isSyncingFromCloud.current = false; }, 100);
+          });
+        });
+
+        return () => unsubscribes.forEach(unsub => unsub());
+      } else {
+        setIsCloudSyncing(false);
+      }
+    });
+
+    return () => unsubscribeAuth();
+  }, []);
+
   useEffect(() => {
     const session = sessionStorage.getItem('nxpet_session');
     if (session) {
@@ -135,11 +180,39 @@ const App: React.FC = () => {
       localStorage.setItem('nxpet_debts', JSON.stringify(debts));
       localStorage.setItem('nxpet_company', JSON.stringify(companyInfo));
       localStorage.setItem('nxpet_next_sale_number', nextSaleNumber.toString());
+
+      // Cloud Sync (Firestore)
+      if (auth.currentUser && !isSyncingFromCloud.current) {
+        const syncToCloud = async () => {
+          try {
+            await setDoc(doc(db, 'companyInfo', 'main'), companyInfo);
+          } catch (e) {
+            console.error("Erro ao sincronizar com a nuvem:", e);
+          }
+        };
+        syncToCloud();
+      }
     }
   }, [products, sales, paymentMethods, customers, nextSaleNumber, companyInfo, isAuthenticated]);
 
-  const handleLogin = (u: string) => { setIsAuthenticated(true); setCurrentUser(u); sessionStorage.setItem('nxpet_session', u); };
-  const handleLogout = () => { setIsAuthenticated(false); setCurrentUser(null); sessionStorage.removeItem('nxpet_session'); };
+  const handleLogin = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      console.error("Erro no login:", error);
+      // Fallback para login local se o Firebase falhar
+      setIsAuthenticated(true);
+      setCurrentUser('Usuário Local');
+    }
+  };
+
+  const handleLogout = () => {
+    signOut(auth);
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+    sessionStorage.removeItem('nxpet_session');
+  };
 
   const handleCompleteSale = (sale: Sale) => {
     const isEdit = sales.some(s => s.id === sale.id);
@@ -295,6 +368,7 @@ const App: React.FC = () => {
         isCollapsed={isSidebarCollapsed}
         setIsCollapsed={setIsSidebarCollapsed}
         isMobileLayout={isMobileLayout}
+        isCloudSyncing={isCloudSyncing}
       />
       <main className={`flex-1 flex flex-col min-w-0 overflow-hidden ${isMobileLayout ? 'pb-32' : ''}`}>
         <header className={`flex justify-between items-center ${isMobileLayout ? 'p-4 pb-2' : 'p-8 pb-4'} print:hidden`}>
