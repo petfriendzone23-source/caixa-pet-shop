@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'nexuspet-offline-v4';
+const CACHE_NAME = 'nexuspet-offline-v5';
 
 // Lista completa de arquivos locais e dependências externas para serem salvos para uso offline
 const ASSETS_TO_CACHE = [
@@ -34,7 +34,6 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('NexusPet: Preparando ambiente para uso 100% Offline...');
-      // Tentamos baixar um por um para não falhar o cache inteiro se uma URL mudar
       return Promise.all(
         ASSETS_TO_CACHE.map(url => {
           return cache.add(url).catch(err => console.warn(`NexusPet: Falha ao cachear dependência ${url}:`, err));
@@ -60,28 +59,31 @@ self.addEventListener('activate', (event) => {
   return self.clients.claim();
 });
 
-// Intercepção de Rede: Estratégia Network-First para Navegação e Stale-While-Revalidate para o resto
+// Intercepção de Rede
 self.addEventListener('fetch', (event) => {
-  // Ignorar extensões de navegador e chrome-extension
   if (!event.request.url.startsWith('http')) return;
 
-  // Para navegação (index.html), tentamos sempre a rede primeiro para garantir que o usuário veja a versão mais recente
+  // Estratégia Network-First para navegação (HTML principal)
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).then((networkResponse) => {
-        const responseToCache = networkResponse.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-        return networkResponse;
-      }).catch(() => {
-        return caches.match(event.request);
-      })
+      fetch(event.request)
+        .then((networkResponse) => {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+          return networkResponse;
+        })
+        .catch(() => {
+          return caches.match(event.request).then(response => {
+            return response || caches.match('/');
+          });
+        })
     );
     return;
   }
 
-  // Para outros recursos, usamos Stale-While-Revalidate (Entrega o cache mas atualiza em background)
+  // Estratégia Stale-While-Revalidate para outros recursos
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request).then((networkResponse) => {
@@ -93,10 +95,17 @@ self.addEventListener('fetch', (event) => {
         }
         return networkResponse;
       }).catch(() => {
-        // Silently fail fetch if offline
+        // Se falhar a rede e não tiver cache, o erro será tratado pelo navegador
+        return null;
       });
 
-      return cachedResponse || fetchPromise;
+      // Se temos no cache, entrega imediatamente e deixa a rede atualizar em background
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+
+      // Se não temos no cache, espera a rede
+      return fetchPromise;
     })
   );
 });

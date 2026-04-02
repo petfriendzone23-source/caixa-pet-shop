@@ -175,33 +175,45 @@
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(registration => {
             console.log('NexusPet: Offline Active');
-            
-            // Detecta atualizações do Service Worker
-            registration.onupdatefound = () => {
-              const installingWorker = registration.installing;
-              if (installingWorker) {
-                installingWorker.onstatechange = () => {
-                  if (installingWorker.state === 'installed') {
-                    if (navigator.serviceWorker.controller) {
-                      // Novo conteúdo disponível, o SW vai pular a espera e ativar
-                      console.log('NexusPet: Nova versão instalada. Recarregando...');
-                    }
-                  }
-                };
-              }
-            };
+          }).catch(err => {
+            console.error('NexusPet: SW registration failed', err);
           });
         });
-
-        // Recarrega a página quando o novo Service Worker assume o controle
-        let refreshing = false;
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          if (!refreshing) {
-            refreshing = true;
-            window.location.reload();
-          }
-        });
       }
+
+      // Fallback: Se o sistema não carregar em 10 segundos, mostra um botão de emergência
+      setTimeout(() => {
+        const root = document.getElementById('root');
+        if (root && root.innerHTML === "") {
+          const btn = document.createElement('button');
+          btn.innerText = "O sistema está demorando? Clique aqui para forçar a entrada.";
+          btn.style.position = "fixed";
+          btn.style.bottom = "20px";
+          btn.style.left = "50%";
+          btn.style.transform = "translateX(-50%)";
+          btn.style.zIndex = "9999";
+          btn.style.padding = "12px 24px";
+          btn.style.background = "#f97316";
+          btn.style.color = "white";
+          btn.style.border = "none";
+          btn.style.borderRadius = "8px";
+          btn.style.fontWeight = "bold";
+          btn.style.cursor = "pointer";
+          btn.onclick = () => {
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.getRegistrations().then(registrations => {
+                for(let registration of registrations) {
+                  registration.unregister();
+                }
+                window.location.reload(true);
+              });
+            } else {
+              window.location.reload(true);
+            }
+          };
+          document.body.appendChild(btn);
+        }
+      }, 10000);
     </script>
   </head>
   <body>
