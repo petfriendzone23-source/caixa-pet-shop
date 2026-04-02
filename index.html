@@ -171,49 +171,50 @@
       }
     </style>
     <script>
+      // Registro do Service Worker para suporte Offline
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(registration => {
-            console.log('NexusPet: Offline Active');
-          }).catch(err => {
-            console.error('NexusPet: SW registration failed', err);
-          });
+          navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .then(registration => {
+              console.log('NexusPet: Service Worker registrado com sucesso.');
+              
+              // Verifica se há uma atualização esperando
+              registration.onupdatefound = () => {
+                const installingWorker = registration.installing;
+                if (installingWorker) {
+                  installingWorker.onstatechange = () => {
+                    if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                      console.log('NexusPet: Nova versão disponível. Por favor, recarregue.');
+                    }
+                  };
+                }
+              };
+            })
+            .catch(err => console.error('NexusPet: Falha ao registrar Service Worker:', err));
         });
       }
 
-      // Fallback: Se o sistema não carregar em 10 segundos, mostra um botão de emergência
+      // Botão de Emergência: Caso o sistema trave no carregamento por mais de 8 segundos
       setTimeout(() => {
         const root = document.getElementById('root');
         if (root && root.innerHTML === "") {
-          const btn = document.createElement('button');
-          btn.innerText = "O sistema está demorando? Clique aqui para forçar a entrada.";
-          btn.style.position = "fixed";
-          btn.style.bottom = "20px";
-          btn.style.left = "50%";
-          btn.style.transform = "translateX(-50%)";
-          btn.style.zIndex = "9999";
-          btn.style.padding = "12px 24px";
-          btn.style.background = "#f97316";
-          btn.style.color = "white";
-          btn.style.border = "none";
-          btn.style.borderRadius = "8px";
-          btn.style.fontWeight = "bold";
-          btn.style.cursor = "pointer";
-          btn.onclick = () => {
+          const emergencyBtn = document.createElement('button');
+          emergencyBtn.innerHTML = "🐾 O sistema está demorando? <br><span style='font-size: 12px; font-weight: normal;'>Clique aqui para forçar a entrada</span>";
+          emergencyBtn.style.cssText = "position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:9999; padding:12px 24px; background:#f97316; color:white; border:none; border-radius:12px; font-weight:bold; cursor:pointer; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); text-align:center; line-height:1.4;";
+          
+          emergencyBtn.onclick = () => {
             if ('serviceWorker' in navigator) {
               navigator.serviceWorker.getRegistrations().then(registrations => {
-                for(let registration of registrations) {
-                  registration.unregister();
-                }
+                for(let reg of registrations) reg.unregister();
                 window.location.reload(true);
               });
             } else {
               window.location.reload(true);
             }
           };
-          document.body.appendChild(btn);
+          document.body.appendChild(emergencyBtn);
         }
-      }, 10000);
+      }, 8000);
     </script>
   </head>
   <body>
