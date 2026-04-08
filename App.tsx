@@ -28,6 +28,7 @@ const DEFAULT_COMPANY: CompanyInfo = {
   phone: '(00) 00000-0000'
 };
 
+// NexusPet - Sistema 100% Local (Sem dependências de nuvem/Firebase)
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);

@@ -171,13 +171,50 @@
       }
     </style>
     <script>
+      // Registro do Service Worker para suporte Offline
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(registration => {
-            console.log('NexusPet: Offline Active');
-          });
+          navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .then(registration => {
+              console.log('NexusPet: Service Worker registrado com sucesso.');
+              
+              // Verifica se há uma atualização esperando
+              registration.onupdatefound = () => {
+                const installingWorker = registration.installing;
+                if (installingWorker) {
+                  installingWorker.onstatechange = () => {
+                    if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                      console.log('NexusPet: Nova versão disponível. Por favor, recarregue.');
+                    }
+                  };
+                }
+              };
+            })
+            .catch(err => console.error('NexusPet: Falha ao registrar Service Worker:', err));
         });
       }
+
+      // Botão de Emergência: Caso o sistema trave no carregamento por mais de 8 segundos
+      setTimeout(() => {
+        const root = document.getElementById('root');
+        if (root && root.innerHTML === "") {
+          const emergencyBtn = document.createElement('button');
+          emergencyBtn.innerHTML = "🐾 O sistema está demorando? <br><span style='font-size: 12px; font-weight: normal;'>Clique aqui para forçar a entrada</span>";
+          emergencyBtn.style.cssText = "position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:9999; padding:12px 24px; background:#f97316; color:white; border:none; border-radius:12px; font-weight:bold; cursor:pointer; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); text-align:center; line-height:1.4;";
+          
+          emergencyBtn.onclick = () => {
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.getRegistrations().then(registrations => {
+                for(let reg of registrations) reg.unregister();
+                window.location.reload(true);
+              });
+            } else {
+              window.location.reload(true);
+            }
+          };
+          document.body.appendChild(emergencyBtn);
+        }
+      }, 8000);
     </script>
   </head>
   <body>
