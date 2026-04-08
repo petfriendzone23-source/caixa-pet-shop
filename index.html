@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="NexusPet">
     <meta name="theme-color" content="#f97316">
@@ -19,11 +19,7 @@
     "react-dom": "https://esm.sh/react-dom@18.3.1",
     "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
     "react/jsx-runtime": "https://esm.sh/react@18.3.1/jsx-runtime",
-    "recharts": "https://esm.sh/recharts@2.12.7?external=react,react-dom",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "react/": "https://esm.sh/react@^19.2.4/",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.4",
-    "vite": "https://esm.sh/vite@^7.3.1"
+    "recharts": "https://esm.sh/recharts@2.12.7?external=react,react-dom"
   }
 }
 </script>
@@ -171,50 +167,30 @@
       }
     </style>
     <script>
-      // Registro do Service Worker para suporte Offline
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js', { scope: '/' })
-            .then(registration => {
-              console.log('NexusPet: Service Worker registrado com sucesso.');
-              
-              // Verifica se há uma atualização esperando
-              registration.onupdatefound = () => {
-                const installingWorker = registration.installing;
-                if (installingWorker) {
-                  installingWorker.onstatechange = () => {
-                    if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                      console.log('NexusPet: Nova versão disponível. Por favor, recarregue.');
-                    }
-                  };
-                }
-              };
-            })
-            .catch(err => console.error('NexusPet: Falha ao registrar Service Worker:', err));
+      // Forçar limpeza de cache se houver erro de Firebase residual de versões antigas
+      if (localStorage.getItem('nxpet_force_clean') !== 'v4') {
+        console.log('NexusPet: Realizando limpeza de cache de segurança...');
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(registrations => {
+            for (let registration of registrations) {
+              registration.unregister();
+            }
+          });
+        }
+        caches.keys().then(names => {
+          for (let name of names) caches.delete(name);
         });
+        localStorage.setItem('nxpet_force_clean', 'v4');
+        // Não recarregamos aqui para evitar loop, o SW novo cuidará disso
       }
 
-      // Botão de Emergência: Caso o sistema trave no carregamento por mais de 8 segundos
-      setTimeout(() => {
-        const root = document.getElementById('root');
-        if (root && root.innerHTML === "") {
-          const emergencyBtn = document.createElement('button');
-          emergencyBtn.innerHTML = "🐾 O sistema está demorando? <br><span style='font-size: 12px; font-weight: normal;'>Clique aqui para forçar a entrada</span>";
-          emergencyBtn.style.cssText = "position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:9999; padding:12px 24px; background:#f97316; color:white; border:none; border-radius:12px; font-weight:bold; cursor:pointer; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); text-align:center; line-height:1.4;";
-          
-          emergencyBtn.onclick = () => {
-            if ('serviceWorker' in navigator) {
-              navigator.serviceWorker.getRegistrations().then(registrations => {
-                for(let reg of registrations) reg.unregister();
-                window.location.reload(true);
-              });
-            } else {
-              window.location.reload(true);
-            }
-          };
-          document.body.appendChild(emergencyBtn);
-        }
-      }, 8000);
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(registration => {
+            console.log('NexusPet: Service Worker registrado com sucesso.');
+          });
+        });
+      }
     </script>
   </head>
   <body>
