@@ -119,6 +119,7 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
   const [payments, setPayments] = useState<{ methodId: string, amount: number }[]>([]);
   const [bulkModalProduct, setBulkModalProduct] = useState<Product | null>(null);
   const [bulkValue, setBulkValue] = useState<string>('');
+  const [bulkWeight, setBulkWeight] = useState<string>('');
   const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
   const [editingPriceValue, setEditingPriceValue] = useState<number>(0);
   const scannerRef = useRef<HTMLInputElement>(null);
@@ -197,17 +198,41 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
     if (product.unitType === 'kg') {
       setBulkModalProduct(product);
       setBulkValue('');
+      setBulkWeight('');
     } else {
       addToCart(product, 1);
     }
   };
 
+  const handleBulkValueChange = (val: string) => {
+    setBulkValue(val);
+    if (!bulkModalProduct) return;
+    const numericValue = parseFloat(val.replace(',', '.'));
+    if (!isNaN(numericValue) && numericValue > 0) {
+      const weight = numericValue / bulkModalProduct.price;
+      setBulkWeight(weight.toFixed(3).replace('.', ','));
+    } else {
+      setBulkWeight('');
+    }
+  };
+
+  const handleBulkWeightChange = (val: string) => {
+    setBulkWeight(val);
+    if (!bulkModalProduct) return;
+    const numericWeight = parseFloat(val.replace(',', '.'));
+    if (!isNaN(numericWeight) && numericWeight > 0) {
+      const value = numericWeight * bulkModalProduct.price;
+      setBulkValue(value.toFixed(2).replace('.', ','));
+    } else {
+      setBulkValue('');
+    }
+  };
+
   const confirmBulkSale = () => {
-    if (!bulkModalProduct || !bulkValue) return;
-    const value = parseFloat(bulkValue.replace(',', '.'));
-    if (value > 0) {
-      const calculatedQty = value / bulkModalProduct.price;
-      addToCart(bulkModalProduct, calculatedQty);
+    if (!bulkModalProduct) return;
+    const weight = parseFloat(bulkWeight.replace(',', '.'));
+    if (weight > 0) {
+      addToCart(bulkModalProduct, weight);
       setBulkModalProduct(null);
     }
   };
@@ -511,18 +536,32 @@ const POSView: React.FC<POSViewProps> = ({ products, paymentMethods, customers, 
               <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">{bulkModalProduct.name}</p>
             </div>
             
-            <div className="space-y-4 mb-8">
+            <div className="grid grid-cols-2 gap-4 mb-8">
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1 block">Valor em Reais (R$)</label>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1 block">Valor (R$)</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">R$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 font-black text-slate-400 text-sm">R$</span>
                   <input 
                     autoFocus
                     type="text" 
                     placeholder="0,00"
-                    className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 dark:bg-slate-800 dark:text-white outline-none text-xl font-black text-slate-800"
+                    className="w-full pl-9 pr-3 py-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 dark:bg-slate-800 dark:text-white outline-none text-lg font-black text-slate-800"
                     value={bulkValue}
-                    onChange={e => setBulkValue(e.target.value)}
+                    onChange={e => handleBulkValueChange(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && confirmBulkSale()}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1 block">Peso (Kg)</label>
+                <div className="relative">
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 font-black text-slate-400 text-sm">Kg</span>
+                  <input 
+                    type="text" 
+                    placeholder="0,000"
+                    className="w-full pl-3 pr-9 py-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 dark:bg-slate-800 dark:text-white outline-none text-lg font-black text-slate-800"
+                    value={bulkWeight}
+                    onChange={e => handleBulkWeightChange(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && confirmBulkSale()}
                   />
                 </div>

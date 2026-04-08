@@ -1,0 +1,102 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    // Collection: products
+    // Document ID: productId
+    // Fields: id, code, name, price, stock, category, subgroup, unitType, backgroundColor
+    //
+    // Collection: sales
+    // Document ID: saleId
+    // Fields: id, total, change, timestamp, customerId, customerName, isCreditSale, items, payments
+    //
+    // Collection: customers
+    // Document ID: customerId
+    // Fields: id, name, phone, email, address, petName, petBreed
+    //
+    // Collection: paymentMethods
+    // Document ID: methodId
+    // Fields: id, name, icon, feePercent
+    //
+    // Collection: settings
+    // Document ID: global
+    // Fields: companyName, companyAddress, companyPhone, companyLogo
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.email == "petfriendzone23@gmail.com" && request.auth.token.email_verified == true);
+    }
+
+    // Generic validation
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    // Domain Validators
+    function isValidProduct(data) {
+      return data.id is string && data.id.size() > 0 &&
+             data.code is string && data.code.size() > 0 &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 200 &&
+             data.price is number && data.price >= 0 &&
+             data.stock is number &&
+             data.category is string;
+    }
+
+    function isValidSale(data) {
+      return data.id is string &&
+             data.total is number && data.total >= 0 &&
+             data.timestamp is number &&
+             data.items is list;
+    }
+
+    function isValidCustomer(data) {
+      return data.id is string &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100;
+    }
+
+    function isValidPaymentMethod(data) {
+      return data.id is string &&
+             data.name is string && data.name.size() > 0 &&
+             data.icon is string;
+    }
+
+    // Match Rules
+    match /products/{productId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() && isValidProduct(request.resource.data);
+    }
+
+    match /sales/{saleId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidSale(request.resource.data);
+      allow update, delete: if isAdmin();
+    }
+
+    match /customers/{customerId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isValidCustomer(request.resource.data);
+    }
+
+    match /paymentMethods/{methodId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() && isValidPaymentMethod(request.resource.data);
+    }
+
+    match /settings/{settingId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+  }
+}
