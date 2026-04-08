@@ -17,10 +17,11 @@ interface SettingsViewProps {
   onRemoveMethod: (id: string) => void;
   onUpdateMethodFee: (id: string, fee: number) => void;
   onUpdateCompanyInfo: (info: CompanyInfo) => void;
+  onClearSales: () => void;
 }
 
 const SettingsView: React.FC<SettingsViewProps> = ({ 
-  products, paymentMethods, companyInfo, isDarkMode, setIsDarkMode, uiScale, setUiScale, layoutMode, setLayoutMode, onAddMethod, onRemoveMethod, onUpdateMethodFee, onUpdateCompanyInfo
+  products, paymentMethods, companyInfo, isDarkMode, setIsDarkMode, uiScale, setUiScale, layoutMode, setLayoutMode, onAddMethod, onRemoveMethod, onUpdateMethodFee, onUpdateCompanyInfo, onClearSales
 }) => {
   const [activeTab, setActiveTab] = useState<'company' | 'payments' | 'appearance' | 'data' | 'labels'>('company');
   const [newMethodName, setNewMethodName] = useState('');
@@ -333,6 +334,19 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                 <p className="text-xs text-slate-400 mt-2">Recupera dados de um arquivo salvo anteriormente.</p>
                 <input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={handleImport} />
               </button>
+              
+              <div className="md:col-span-2 p-8 bg-red-950/30 rounded-[32px] border border-red-900/30">
+                <h4 className="font-bold text-lg text-red-400 flex items-center gap-2">
+                  <span>⚠️</span> Manutenção do Sistema
+                </h4>
+                <p className="text-xs text-slate-400 mt-2 mb-6">Se o sistema estiver lento ou travando, pode ser devido ao grande volume de vendas salvas no navegador.</p>
+                <button 
+                  onClick={onClearSales}
+                  className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-black rounded-xl uppercase text-xs transition-all active:scale-95"
+                >
+                  Limpar Histórico de Vendas
+                </button>
+              </div>
             </div>
           </div>
         )}
