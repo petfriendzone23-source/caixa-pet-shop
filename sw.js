@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'nexuspet-offline-v4';
+const CACHE_NAME = 'nexuspet-offline-v3';
 
 // Lista completa de arquivos locais e dependências externas para serem salvos para uso offline
 const ASSETS_TO_CACHE = [
