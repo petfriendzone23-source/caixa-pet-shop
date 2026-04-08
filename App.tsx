@@ -32,9 +32,9 @@ const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => localStorage.getItem('nxpet_dark_mode') === 'true');
-  const [uiScale, setUiScale] = useState<number>(() => parseFloat(localStorage.getItem('nxpet_ui_scale') || '1'));
-  const [layoutMode, setLayoutMode] = useState<'auto' | 'desktop' | 'mobile'>(() => (localStorage.getItem('nxpet_layout_mode') as 'auto' | 'desktop' | 'mobile') || 'auto');
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => { try { return localStorage.getItem('nxpet_dark_mode') === 'true'; } catch { return false; } });
+  const [uiScale, setUiScale] = useState<number>(() => { try { return parseFloat(localStorage.getItem('nxpet_ui_scale') || '1'); } catch { return 1; } });
+  const [layoutMode, setLayoutMode] = useState<'auto' | 'desktop' | 'mobile'>(() => { try { return (localStorage.getItem('nxpet_layout_mode') as 'auto' | 'desktop' | 'mobile') || 'auto'; } catch { return 'auto'; } });
   const [isMobileScreen, setIsMobileScreen] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -55,7 +55,7 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>('pos');
   const [lastSale, setLastSale] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => localStorage.getItem('nxpet_sidebar_collapsed') === 'true');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => { try { return localStorage.getItem('nxpet_sidebar_collapsed') === 'true'; } catch { return false; } });
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Sincroniza a classe 'dark' no elemento <html> (necessário para Tailwind darkMode: 'class')
