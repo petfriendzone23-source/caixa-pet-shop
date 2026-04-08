@@ -38,6 +38,7 @@ const App: React.FC = () => {
   const [isMobileScreen, setIsMobileScreen] = useState(window.innerWidth < 768);
 
   useEffect(() => {
+    console.log("NexusPet Version 1.5.1 - Cache Cleared");
     const handleResize = () => setIsMobileScreen(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
