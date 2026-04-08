@@ -32,13 +32,12 @@ const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => { try { return localStorage.getItem('nxpet_dark_mode') === 'true'; } catch { return false; } });
-  const [uiScale, setUiScale] = useState<number>(() => { try { return parseFloat(localStorage.getItem('nxpet_ui_scale') || '1'); } catch { return 1; } });
-  const [layoutMode, setLayoutMode] = useState<'auto' | 'desktop' | 'mobile'>(() => { try { return (localStorage.getItem('nxpet_layout_mode') as 'auto' | 'desktop' | 'mobile') || 'auto'; } catch { return 'auto'; } });
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => localStorage.getItem('nxpet_dark_mode') === 'true');
+  const [uiScale, setUiScale] = useState<number>(() => parseFloat(localStorage.getItem('nxpet_ui_scale') || '1'));
+  const [layoutMode, setLayoutMode] = useState<'auto' | 'desktop' | 'mobile'>(() => (localStorage.getItem('nxpet_layout_mode') as 'auto' | 'desktop' | 'mobile') || 'auto');
   const [isMobileScreen, setIsMobileScreen] = useState(window.innerWidth < 768);
 
   useEffect(() => {
-    console.log("NexusPet Version 1.5.1 - Cache Cleared");
     const handleResize = () => setIsMobileScreen(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -56,8 +55,7 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>('pos');
   const [lastSale, setLastSale] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => { try { return localStorage.getItem('nxpet_sidebar_collapsed') === 'true'; } catch { return false; } });
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => localStorage.getItem('nxpet_sidebar_collapsed') === 'true');
 
   // Sincroniza a classe 'dark' no elemento <html> (necessário para Tailwind darkMode: 'class')
   useEffect(() => {
@@ -130,22 +128,14 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-      
-      saveTimeoutRef.current = setTimeout(() => {
-        localStorage.setItem('nxpet_products', JSON.stringify(products));
-        localStorage.setItem('nxpet_sales', JSON.stringify(sales));
-        localStorage.setItem('nxpet_payments', JSON.stringify(paymentMethods));
-        localStorage.setItem('nxpet_customers', JSON.stringify(customers));
-        localStorage.setItem('nxpet_debts', JSON.stringify(debts));
-        localStorage.setItem('nxpet_company', JSON.stringify(companyInfo));
-        localStorage.setItem('nxpet_next_sale_number', nextSaleNumber.toString());
-      }, 1000); // Debounce de 1 segundo
+      localStorage.setItem('nxpet_products', JSON.stringify(products));
+      localStorage.setItem('nxpet_sales', JSON.stringify(sales));
+      localStorage.setItem('nxpet_payments', JSON.stringify(paymentMethods));
+      localStorage.setItem('nxpet_customers', JSON.stringify(customers));
+      localStorage.setItem('nxpet_debts', JSON.stringify(debts));
+      localStorage.setItem('nxpet_company', JSON.stringify(companyInfo));
+      localStorage.setItem('nxpet_next_sale_number', nextSaleNumber.toString());
     }
-    
-    return () => {
-      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    };
   }, [products, sales, paymentMethods, customers, nextSaleNumber, companyInfo, isAuthenticated]);
 
   const handleLogin = (u: string) => { setIsAuthenticated(true); setCurrentUser(u); sessionStorage.setItem('nxpet_session', u); };
@@ -243,16 +233,6 @@ const App: React.FC = () => {
     }));
   };
 
-  const handleClearSales = () => {
-    if (confirm("⚠️ ATENÇÃO: Isso apagará TODO o histórico de vendas permanentemente. O estoque NÃO será alterado. Deseja continuar?")) {
-      setSales([]);
-      setDebts([]);
-      localStorage.setItem('nxpet_sales', '[]');
-      localStorage.setItem('nxpet_debts', '[]');
-      alert("Histórico de vendas limpo com sucesso.");
-    }
-  };
-
   const renderView = () => {
     switch (currentView) {
       case 'pos': return <POSView 
@@ -291,7 +271,6 @@ const App: React.FC = () => {
         onRemoveMethod={(id) => setPaymentMethods(paymentMethods.filter(p => p.id !== id))} 
         onUpdateMethodFee={(id, f) => setPaymentMethods(paymentMethods.map(p => p.id === id ? {...p, feePercent: f} : p))} 
         onUpdateCompanyInfo={setCompanyInfo} 
-        onClearSales={handleClearSales}
       />;
       default: return null;
     }
